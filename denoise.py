@@ -40,19 +40,23 @@ def denoise_img(image):
     # Gx = ndimage.sobel(BlurredPyramid[0],axis=0,mode='constant')
     # Gy = ndimage.sobel(BlurredPyramid[0],axis=1,mode='constant')
 
-    Gx = cv2.Sobel(BlurredPyramid[0], cv2.CV_32F, 1, 0)
-    Gy = cv2.Sobel(BlurredPyramid[0], cv2.CV_32F, 0, 1)
+    kernel_x = np.array([1,0,-1,2,0,-2,1,0,-1]).reshape((3, 3))
+    kernel_y = np.array([1,2,1,0,0,0,-1,-2,-1]).reshape((3, 3))
+    # Gx = cv2.Sobel(BlurredPyramid[0], cv2.CV_64F, 1, 0)
+    # Gy = cv2.Sobel(BlurredPyramid[0], cv2.CV_64F, 0, 1)
+    Gx = ndimage.convolve(np.abs(BlurredPyramid[0]), kernel_x, mode='nearest')
+    Gy = ndimage.convolve(np.abs(BlurredPyramid[0]), kernel_y, mode='nearest')
 
-    diffused_img = to_python(eng.poisson_solver_function(to_matlab(1*(0.5*(W)+1.0)*Gx, expand_dims = False),
-                                                         to_matlab(1*(0.5*(W)+1.0)*Gy, expand_dims = False),
+    diffused_img = to_python(eng.poisson_solver_function(to_matlab((0.5 * (W) + 1.0) * Gx, expand_dims = False),
+                                                         to_matlab((0.5 * (W) + 1.0) * Gy, expand_dims = False),
                                                          to_matlab(BlurredPyramid[0], expand_dims = False)), expand_dims = False)
 
     # Rrgb = ConvertFormOpponentToRgb1( R );
 
     normalized = diffused_img / diffused_img.max()
 
-    plt.imsave('./results/a.png',diffused_img, cmap='gray')
-    return diffused_img
+    plt.imsave('./results/a.png', normalized, cmap='gray')
+    return normalized
 
 
 
