@@ -55,8 +55,8 @@ def denoise_img(image):
 
     normalized = diffused_img / diffused_img.max()
     cropped = normalized[:-padR, :-padC]
-
-    plt.imsave('./results/a.png', cropped, cmap='gray')
+    clipped = np.clip(cropped, 0, 1)
+    plt.imsave('./results/a.png', clipped, cmap='gray')
     return normalized
 
 
@@ -66,3 +66,6 @@ img = np.expand_dims(img, 2)
 # img = np.expand_dims(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 2)
 # img=np.random.rand(256,256,1)
 denoise_img(img)
+mat = cv2.imread('./matlab_outputs/output.png',0).astype(np.float32)/255.0
+out = cv2.imread('./results/a.png',0).astype(np.float32)/255.0
+a = mat-out
