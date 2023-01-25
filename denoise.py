@@ -54,8 +54,9 @@ def denoise_img(image):
     # Rrgb = ConvertFormOpponentToRgb1( R );
 
     normalized = diffused_img / diffused_img.max()
+    cropped = normalized[:-padR, :-padC]
 
-    plt.imsave('./results/a.png', normalized, cmap='gray')
+    plt.imsave('./results/a.png', cropped, cmap='gray')
     return normalized
 
 
