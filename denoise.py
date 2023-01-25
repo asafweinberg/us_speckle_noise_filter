@@ -37,8 +37,11 @@ def denoise_img(image):
         if (W.max() > 0):
             W = W / W.max()
     
-    Gx = ndimage.sobel(BlurredPyramid[0],axis=0,mode='constant')
-    Gy = ndimage.sobel(BlurredPyramid[0],axis=1,mode='constant')
+    # Gx = ndimage.sobel(BlurredPyramid[0],axis=0,mode='constant')
+    # Gy = ndimage.sobel(BlurredPyramid[0],axis=1,mode='constant')
+
+    Gx = cv2.Sobel(BlurredPyramid[0], cv2.CV_32F, 1, 0)
+    Gy = cv2.Sobel(BlurredPyramid[0], cv2.CV_32F, 0, 1)
 
     diffused_img = to_python(eng.poisson_solver_function(to_matlab(1*(0.5*(W)+1.0)*Gx, expand_dims = False),
                                                          to_matlab(1*(0.5*(W)+1.0)*Gy, expand_dims = False),
