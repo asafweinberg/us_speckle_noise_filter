@@ -12,7 +12,7 @@ def pad_image_with_bounderies(img):
     
     padR = padFactor - h
     padC = padFactor - w
-    padded_image = np.pad(img,((0,padR),(0,padC),(0,0)),'edge')
+    padded_image = np.pad(img,((0,padR),(0,padC),(0,0)),'edge') #padded_image is 3dims
     #padded_image = eng.padarray(img, [padR, padC, 0],'replicate','post')
 
     return padded_image,padR,padC
