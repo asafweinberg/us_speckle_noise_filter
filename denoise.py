@@ -9,7 +9,7 @@ from matplotlib.colors import Normalize
 
 
 #input image in grey scale and type float_32
-def denoise_img(image):
+def denoise_img(image, file_name):
     eng = matlab.engine.start_matlab()
     scale_factor = 0.7
     N = 3
@@ -36,36 +36,44 @@ def denoise_img(image):
 
         if (W.max() > 0):
             W = W / W.max()
-    
-    # Gx = ndimage.sobel(BlurredPyramid[0],axis=0,mode='constant')
-    # Gy = ndimage.sobel(BlurredPyramid[0],axis=1,mode='constant')
 
-    kernel_x = np.array([1,0,-1,2,0,-2,1,0,-1]).reshape((3, 3))
-    kernel_y = np.array([1,2,1,0,0,0,-1,-2,-1]).reshape((3, 3))
+    # kernel_x = np.array([1,0,-1,2,0,-2,1,0,-1]).reshape((3, 3))
+    # kernel_y = np.array([1,2,1,0,0,0,-1,-2,-1]).reshape((3, 3))
     # Gx = cv2.Sobel(BlurredPyramid[0], cv2.CV_64F, 1, 0)
     # Gy = cv2.Sobel(BlurredPyramid[0], cv2.CV_64F, 0, 1)
-    Gx = ndimage.convolve(np.abs(BlurredPyramid[0]), kernel_x, mode='nearest')
-    Gy = ndimage.convolve(np.abs(BlurredPyramid[0]), kernel_y, mode='nearest')
+    # # Gx = ndimage.convolve(np.abs(BlurredPyramid[0]), kernel_x, mode='nearest')
+    # # Gy = ndimage.convolve(np.abs(BlurredPyramid[0]), kernel_y, mode='nearest')
 
-    diffused_img = to_python(eng.poisson_solver_function(to_matlab((0.5 * (W) + 1.0) * Gx, expand_dims = False),
-                                                         to_matlab((0.5 * (W) + 1.0) * Gy, expand_dims = False),
-                                                         to_matlab(BlurredPyramid[0], expand_dims = False)), expand_dims = False)
+    # diffused_img = to_python(eng.poisson_solver_function(to_matlab((0.5 * (W) + 1.0) * Gx, expand_dims = False),
+    #                                                      to_matlab((0.5 * (W) + 1.0) * Gy, expand_dims = False),
+    #                                                      to_matlab(BlurredPyramid[0], expand_dims = False)), expand_dims = False)
 
-    # Rrgb = ConvertFormOpponentToRgb1( R );
+    # # Rrgb = ConvertFormOpponentToRgb1( R );
 
-    normalized = diffused_img / diffused_img.max()
+    # normalized = diffused_img / diffused_img.max()
+    # cropped = normalized[:-padR, :-padC]
+    # clipped = np.clip(cropped, 0, 1)
+    # plt.imsave(f'./results/{file_name}_cv2_sobel.png', clipped, cmap='gray')
+
+    Gy = ndimage.sobel(BlurredPyramid[0],axis=0,mode='constant')
+    Gx = ndimage.sobel(BlurredPyramid[0],axis=1,mode='constant')
+
+    diffused_img_sobel = to_python(eng.poisson_solver_function(to_matlab((0.5 * (W) + 1.0) * Gx, expand_dims = False),
+                                                    to_matlab((0.5 * (W) + 1.0) * Gy, expand_dims = False),
+                                                    to_matlab(BlurredPyramid[0], expand_dims = False)), expand_dims = False)
+    normalized = diffused_img_sobel / diffused_img_sobel.max()
     cropped = normalized[:-padR, :-padC]
-    clipped = np.clip(cropped, 0, 1)
-    plt.imsave('./results/a.png', clipped, cmap='gray')
+    clipped = cropped
+    # clipped = np.clip(cropped, 0, 1)
+    plt.imsave(f'./results/{file_name}_ndimage_sobel_no_clip.png', clipped, cmap='gray')
+
     return normalized
 
 
-
-img = cv2.imread('./data/UStest.png',0).astype(np.float32)/255.0
+file_name = 'speckle_noise_example.ppm'
+img = cv2.imread(f'./data/{file_name}',0).astype(np.float32)/255.0
 img = np.expand_dims(img, 2)
 # img = np.expand_dims(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 2)
 # img=np.random.rand(256,256,1)
-denoise_img(img)
-mat = cv2.imread('./matlab_outputs/output.png',0).astype(np.float32)/255.0
-out = cv2.imread('./results/a.png',0).astype(np.float32)/255.0
-a = mat-out
+denoise_img(img, file_name)
+
