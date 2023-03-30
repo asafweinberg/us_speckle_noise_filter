@@ -3,20 +3,25 @@ import cv2
 import math
 from skimage.util import random_noise
 from denoise import denoise_img
+from enums import *
+import matplotlib.pyplot as plt
 
 mean = 0
-noise_variance = 0.5 
+noise_variance = 0.2
 
 def run_metrics(laplacian_filter):
-    img = cv2.imread(".\\metrics\\images\\lena.png",0) / 255.0
-    img = np.expand_dims(img, 2)
+    img = cv2.imread(".\\metrics\\images\\lena.png",0).astype(np.float32) / 255.0
     results = run_metrics_on_img(img, laplacian_filter)
 
     print_results(results)
 
 def run_metrics_on_img(img, laplacian_filter):
     noisy_img = add_speckle_noise(img)
-    clean_image = denoise_img(img, laplacian_filter)
+    plt.imsave(f'.\\metrics\\images\\noisy2.png', noisy_img, cmap='gray')
+    noisy_img = np.expand_dims(noisy_img, 2)
+
+    clean_image = denoise_img(noisy_img, laplacian_filter, PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_ND_IMAGE)
+    plt.imsave(f'.\\metrics\\images\\clean.png', clean_image, cmap='gray')
 
     return({
         'mse': meansquareerror(img,clean_image),
