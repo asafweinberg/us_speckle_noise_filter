@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import matlab.engine
 from scipy import ndimage
-from generate_blurred_pyramid import generate_blurred_pyramid_func
+from generate_blurred_pyramid import *
 from matlab_hadler import *
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
@@ -12,7 +12,7 @@ eng = matlab.engine.start_matlab()
 
 
 #input image in grey scale and type float_32
-def denoise_img(image, file_name, laplacian_filter, pyr_method=PyrMethod.MATLAB, edge_filter=EdgeFilter.SOBEL_ND_IMAGE):
+def denoise_img(image, file_name, laplacian_filter, pyr_method, edge_filter):
     scale_factor = 0.7
     N = 3
 
@@ -28,7 +28,7 @@ def denoise_img(image, file_name, laplacian_filter, pyr_method=PyrMethod.MATLAB,
 
     for i in range(N-2,-1,-1):
         Gn = np.abs(ndimage.convolve(np.abs(BlurredPyramid[i]), laplacian_filter, mode='nearest'))
-        W_expanded = pyramid_up(W)
+        W_expanded = pyramid_up(W,pyr_method)
         W = np.maximum(W_expanded, Gn)
 
         if (W.max() > 0):
@@ -69,18 +69,19 @@ def denoise_img(image, file_name, laplacian_filter, pyr_method=PyrMethod.MATLAB,
 
     return normalized
 
-def create_pyramid(image, number_of_layers, method=PyrMethod.MATLAB):
+def create_pyramid(image, number_of_layers, method):
     if method == PyrMethod.MATLAB:
         BlurredPyramid, padR, padC = generate_blurred_pyramid_func(eng, image, number_of_layers)
         return BlurredPyramid, padR, padC
     elif method == PyrMethod.CV2:
-        return
+        BlurredPyramid, padR, padC = generate_blurred_pyramid_cv2_func(image, number_of_layers)
+        return BlurredPyramid, padR, padC
 
-def pyramid_up(W, method=PyrMethod.MATLAB):
+def pyramid_up(W, method):
     if method == PyrMethod.MATLAB:
         return to_python(eng.my_impyramid(to_matlab(W, expand_dims=True), 'expand'), expand_dims=False)
     if method == PyrMethod.CV2:
-        return
+        return cv2.pyrUp(W)
 
 def detect_edges(image, edge_filter=EdgeFilter.SOBEL_ND_IMAGE):
     if EdgeFilter.SOBEL_ND_IMAGE:
@@ -92,12 +93,18 @@ def detect_edges(image, edge_filter=EdgeFilter.SOBEL_ND_IMAGE):
     return Gx,Gy
 
 
-file_name = 'speckle_noise_example.ppm'
+file_name = 'UStest.png'
 img = cv2.imread(f'./data/{file_name}',0).astype(np.float32)/255.0
-laplacian = 0.5 * np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
 
-img = np.expand_dims(img, 2)
+# img=np.random.rand(16)
+# img=img.reshape(4,4)
+
+laplacian = np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3)) # add 0.5 *
+
+img = np.expand_dims(img, 2) #adds another dim
 # img = np.expand_dims(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 2)
 # img=np.random.rand(256,256,1)
-denoise_img(img, file_name, laplacian, pyr_method=PyrMethod.MATLAB, edge_filter=EdgeFilter.SOBEL_CV2)
+CV2_img =denoise_img(img, file_name, laplacian, pyr_method=PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_ND_IMAGE)
+MATLAB_img =denoise_img(img, file_name, laplacian, pyr_method=PyrMethod.MATLAB, edge_filter=EdgeFilter.SOBEL_ND_IMAGE)
 
+print(np.max(CV2_img-MATLAB_img))
