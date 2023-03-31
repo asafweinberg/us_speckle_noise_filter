@@ -20,7 +20,7 @@ def run_metrics_on_img(img, laplacian_filter):
     plt.imsave(f'.\\metrics\\images\\noisy2.png', noisy_img, cmap='gray')
     noisy_img = np.expand_dims(noisy_img, 2)
 
-    clean_image = denoise_img(noisy_img, laplacian_filter, PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_ND_IMAGE)
+    clean_image = denoise_img(noisy_img, laplacian_filter, 4, PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_ND_IMAGE)
     plt.imsave(f'.\\metrics\\images\\clean.png', clean_image, cmap='gray')
 
     return({

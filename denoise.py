@@ -12,21 +12,24 @@ eng = matlab.engine.start_matlab()
 
 
 #input image in grey scale and type float_32
-def denoise_img(image, laplacian_filter, pyr_method, edge_filter, file_name=None):
+def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter, file_name=None, log=False):
     scale_factor = 0.7
-    N = 3
 
     scaled_shape_int=(int(image.shape[0] * scale_factor),  int(image.shape[1] * scale_factor))
 
     scaled_img = image
     
-    BlurredPyramid, padR, padC = create_pyramid(scaled_img, N, pyr_method)
-    W= np.abs(ndimage.convolve(np.abs(BlurredPyramid[N-1]), laplacian_filter, mode='nearest'))
+    if log: print('creating gaussian pyramid')
+
+    BlurredPyramid, padR, padC = create_pyramid(scaled_img, pyr_levels, pyr_method)
+    W= np.abs(ndimage.convolve(np.abs(BlurredPyramid[pyr_levels-1]), laplacian_filter, mode='nearest'))
 
     if (W.max() > 0):
         W = W/ W.max()
 
-    for i in range(N-2,-1,-1):
+    if log: print('finding maximum edges from pyramid layers')
+
+    for i in range(pyr_levels-2,-1,-1):
         Gn = np.abs(ndimage.convolve(np.abs(BlurredPyramid[i]), laplacian_filter, mode='nearest'))
         W_expanded = pyramid_up(W,pyr_method)
         W = np.maximum(W_expanded, Gn)
@@ -56,7 +59,11 @@ def denoise_img(image, laplacian_filter, pyr_method, edge_filter, file_name=None
 
     # ----------------------------------ndimage Sobel--------------------------------------------------------
     
+    if log: print('edge detection')
+
     Gx, Gy = detect_edges(BlurredPyramid[0], edge_filter)
+
+    if log: print('starting poisson solver')
 
     diffused_img_sobel = to_python(eng.poisson_solver_function(to_matlab((0.5 * (W) + 1.0) * Gx, expand_dims = False),
                                                     to_matlab((0.5 * (W) + 1.0) * Gy, expand_dims = False),
@@ -69,11 +76,10 @@ def denoise_img(image, laplacian_filter, pyr_method, edge_filter, file_name=None
 
     img_float=(cropped-min_val)/(max_val-min_val)
 
-
     #clipped = cropped
     #clipped = np.clip(cropped, 0, 1)
     if file_name:
-        plt.imsave(f'./results/{file_name}_ndimage_sobel_no_clip.png', img_float, cmap='gray')
+        save_results(scaled_img, img_float, file_name)
 
     return img_float
 
@@ -100,15 +106,30 @@ def detect_edges(image, edge_filter=EdgeFilter.SOBEL_ND_IMAGE):
         Gy = cv2.Sobel(image, cv2.CV_64F, 0, 1)
     return Gx,Gy
 
+
+def save_results(origin, denoised, file_name):
+    _, axarr = plt.subplots(ncols=2, figsize=(14,14))
+    axarr[0].imshow(origin, cmap='gray')
+    axarr[0].axis('off')
+    axarr[1].imshow(denoised, cmap='gray')
+    axarr[1].axis('off')
+    plt.savefig(f'./results/{file_name}.png', bbox_inches='tight')
+
+
 if __name__ == "__main__":
-    file_name = 'UStest.png'
+    file_name = 'benign_15.png'
+    N = 4
+    file_name_extension = f'{N}_layers_lx2'
+    save_name = f'{file_name[:-4]}_{file_name_extension}'
+
     img = cv2.imread(f'./data/{file_name}',0).astype(np.float32)/255.0
-    laplacian = 0.5 * np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
+    laplacian = np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
 
     img = np.expand_dims(img, 2) #adds another dim
+
     # img = np.expand_dims(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 2)
     # img=np.random.rand(256,256,1)
-    #CV2_img =denoise_img(img, laplacian, pyr_method=PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_ND_IMAGE,file_name=file_name)
-    MATLAB_img =denoise_img(img, laplacian, pyr_method=PyrMethod.MATLAB, edge_filter=EdgeFilter.SOBEL_ND_IMAGE, file_name=file_name)
+    #CV2_img =denoise_img(img, laplacian, pyr_method=PyrMet hod.CV2, edge_filter=EdgeFilter.SOBEL_ND_IMAGE,file_name=file_name)
+    MATLAB_img =denoise_img(img, laplacian, pyr_levels=N, pyr_method=PyrMethod.MATLAB, edge_filter=EdgeFilter.SOBEL_ND_IMAGE, file_name=save_name,log=True)
 
     #print(np.max(CV2_img-MATLAB_img))
