@@ -63,12 +63,19 @@ def denoise_img(image, laplacian_filter, pyr_method, edge_filter, file_name=None
                                                     to_matlab(BlurredPyramid[0], expand_dims = False)), expand_dims = False)
     normalized = diffused_img_sobel / diffused_img_sobel.max()
     cropped = normalized[:-padR, :-padC]
-    clipped = cropped
-    clipped = np.clip(cropped, 0, 1)
-    if file_name:
-        plt.imsave(f'./results/{file_name}_ndimage_sobel_no_clip.png', clipped, cmap='gray')
 
-    return clipped
+    min_val=np.min(cropped)
+    max_val=np.max(cropped)
+
+    img_float=(cropped-min_val)/(max_val-min_val)
+
+
+    #clipped = cropped
+    #clipped = np.clip(cropped, 0, 1)
+    if file_name:
+        plt.imsave(f'./results/{file_name}_ndimage_sobel_no_clip.png', img_float, cmap='gray')
+
+    return img_float
 
 def create_pyramid(image, number_of_layers, method):
     if method == PyrMethod.MATLAB:
@@ -94,14 +101,14 @@ def detect_edges(image, edge_filter=EdgeFilter.SOBEL_ND_IMAGE):
     return Gx,Gy
 
 if __name__ == "__main__":
-    file_name = 'speckle_noise_example.ppm'
+    file_name = 'UStest.png'
     img = cv2.imread(f'./data/{file_name}',0).astype(np.float32)/255.0
     laplacian = 0.5 * np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
 
     img = np.expand_dims(img, 2) #adds another dim
     # img = np.expand_dims(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 2)
     # img=np.random.rand(256,256,1)
-    CV2_img =denoise_img(img, file_name, laplacian, pyr_method=PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_ND_IMAGE)
-    MATLAB_img =denoise_img(img, file_name, laplacian, pyr_method=PyrMethod.MATLAB, edge_filter=EdgeFilter.SOBEL_ND_IMAGE)
+    #CV2_img =denoise_img(img, laplacian, pyr_method=PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_ND_IMAGE,file_name=file_name)
+    MATLAB_img =denoise_img(img, laplacian, pyr_method=PyrMethod.MATLAB, edge_filter=EdgeFilter.SOBEL_ND_IMAGE, file_name=file_name)
 
-    print(np.max(CV2_img-MATLAB_img))
+    #print(np.max(CV2_img-MATLAB_img))
