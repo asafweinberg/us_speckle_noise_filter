@@ -117,7 +117,7 @@ def save_results(origin, denoised, file_name):
 
 
 if __name__ == "__main__":
-    file_name = 'benign_15.png'
+    file_name = 'UStest.png'
     N = 4
     file_name_extension = f'{N}_layers_lx2'
     save_name = f'{file_name[:-4]}_{file_name_extension}'
@@ -130,6 +130,6 @@ if __name__ == "__main__":
     # img = np.expand_dims(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 2)
     # img=np.random.rand(256,256,1)
     #CV2_img =denoise_img(img, laplacian, pyr_method=PyrMet hod.CV2, edge_filter=EdgeFilter.SOBEL_ND_IMAGE,file_name=file_name)
-    MATLAB_img =denoise_img(img, laplacian, pyr_levels=N, pyr_method=PyrMethod.MATLAB, edge_filter=EdgeFilter.SOBEL_ND_IMAGE, file_name=save_name,log=True)
+    MATLAB_img =denoise_img(img, laplacian, pyr_levels=N, pyr_method=PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_ND_IMAGE, file_name=save_name,log=True)
 
     #print(np.max(CV2_img-MATLAB_img))

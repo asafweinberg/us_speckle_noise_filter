@@ -6,22 +6,41 @@ from denoise import denoise_img
 from enums import *
 import matplotlib.pyplot as plt
 
+from os import listdir
+from os.path import isfile, join
+
 mean = 0
-noise_variance = 0.6
+noise_variance = 0.04
+images_path=".\\metrics\\images"
 
-def run_metrics(laplacian_filter):
-    img = cv2.imread(".\\metrics\\images\\lena.png",0).astype(np.float32) / 255.0
-    results = run_metrics_on_img(img, laplacian_filter)
+def run_metrics(laplacian_filter,number_layers):
+    only_files = [f for f in listdir(images_path) if isfile(join(images_path, f))]
+    images_names=[f for f in only_files if ".png" in f]
+    average_results={
+        'mse': 0,
+        'signal2noise': 0,
+        'psnr': 0
+        }
+    results_list=[]
 
-    print_results(results)
+    for img_name in images_names:
+        img = cv2.imread(join(images_path, img_name),0).astype(np.float32) / 255.0
+        results = run_metrics_on_img(img, laplacian_filter,number_layers)
+        results_list.append(results)
 
-def run_metrics_on_img(img, laplacian_filter):
+    for metrica in average_results.keys():
+        avg=float(sum(result[metrica] for result in results_list)) / len(results_list)
+        average_results[metrica]=avg
+    
+    print_results(average_results)
+
+def run_metrics_on_img(img, laplacian_filter,number_layers):
     noisy_img = add_speckle_noise(img)
-    plt.imsave(f'.\\metrics\\images\\noisy2.png', noisy_img, cmap='gray')
+    #plt.imsave(f'.\\metrics\\images\\noisy2.png', noisy_img, cmap='gray')
     noisy_img = np.expand_dims(noisy_img, 2)
 
-    clean_image = denoise_img(noisy_img, laplacian_filter, 4, PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_ND_IMAGE)
-    plt.imsave(f'.\\metrics\\images\\clean.png', clean_image, cmap='gray')
+    clean_image = denoise_img(noisy_img, laplacian_filter, number_layers, PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_CV2,file_name="LenaCV2")
+    #plt.imsave(f'.\\metrics\\images\\clean.png', clean_image, cmap='gray')
 
     return({
         'mse': meansquareerror(img,clean_image),
@@ -60,5 +79,5 @@ def psnr(src, dst):
 
 
 def print_results(metrics):
-    print(f'MSE: {metrics["mse"]},    signal2noise: {metrics["signal2noise"]},    PSNR: {metrics["psnr"]}')
+    print(f'Average: MSE: {metrics["mse"]},    signal2noise: {metrics["signal2noise"]},    PSNR: {metrics["psnr"]}')
 
