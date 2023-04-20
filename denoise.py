@@ -38,7 +38,7 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter, fi
         if (W.max() > 0):
             W = W / W.max()
     
-    if log: save_results(scaled_img, W, 'W')
+    # if log: save_results(scaled_img, W, 'W')
 
     # ----------------------------------cv2 Sobel--------------------------------------------------------
 
@@ -70,19 +70,27 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter, fi
 
     Wx = (0.5 * (W) + 1.0) * Gx
     Wy = (0.5 * (W) + 1.0) * Gy
-    if log: save_results(scaled_img, Wx, 'Wx_canny')
-    if log: save_results(scaled_img, Wy, 'Wy2_canny')
+    # if log: save_results(scaled_img, Wx, 'Wx_canny')
+    # if log: save_results(scaled_img, Wy, 'Wy2_canny')
 
     diffused_img_sobel = to_python(eng.poisson_solver_function(to_matlab(Wx, expand_dims = False),
                                                     to_matlab(Wy, expand_dims = False),
                                                     to_matlab(BlurredPyramid[0], expand_dims = False)), expand_dims = False)
-    normalized = diffused_img_sobel / diffused_img_sobel.max()
-    cropped = normalized[:-padR, :-padC]
+    
+    
+    cropped = diffused_img_sobel[:-padR, :-padC]
+    min_clip = np.percentile(cropped, 10)
+    max_clip = np.percentile(cropped, 90)
+    clipped = np.clip(cropped, min_clip, max_clip)
 
-    min_val=np.min(cropped)
-    max_val=np.max(cropped)
+    # normalized = diffused_img_sobel / diffused_img_sobel.max()
 
-    img_float=(cropped-min_val)/(max_val-min_val)
+    min_val=np.min(clipped)
+    max_val=np.max(clipped)
+
+    img_float=(clipped-min_val)/(max_val-min_val)
+
+    # img_float = cv2.equalizeHist((img_float*255).astype(np.uint8))
 
     #clipped = cropped
     #clipped = np.clip(cropped, 0, 1)
