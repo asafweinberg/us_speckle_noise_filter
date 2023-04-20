@@ -130,7 +130,7 @@ def save_results(origin, denoised, file_name):
 
 
 if __name__ == "__main__":
-    file_name = 'benign_15.png'
+    file_name = 'UStest.png'
     N = 4
     file_name_extension = f'{N}_layers_lx2_canny'
     save_name = f'{file_name[:-4]}_{file_name_extension}'
