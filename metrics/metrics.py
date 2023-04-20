@@ -7,7 +7,7 @@ from enums import *
 import matplotlib.pyplot as plt
 
 mean = 0
-noise_variance = 0.6
+noise_variance = 0.4
 
 def run_metrics(laplacian_filter):
     img = cv2.imread(".\\metrics\\images\\lena.png",0).astype(np.float32) / 255.0

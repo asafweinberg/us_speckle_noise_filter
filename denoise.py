@@ -34,8 +34,11 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter, fi
         W_expanded = pyramid_up(W,pyr_method)
         W = np.maximum(W_expanded, Gn)
 
+        # TODO: remove the 0 padding, hurts this condition
         if (W.max() > 0):
             W = W / W.max()
+    
+    if log: save_results(scaled_img, W, 'W')
 
     # ----------------------------------cv2 Sobel--------------------------------------------------------
 
@@ -61,12 +64,17 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter, fi
     
     if log: print('edge detection')
 
-    Gx, Gy = detect_edges(BlurredPyramid[0], edge_filter)
+    Gx, Gy = detect_edges(BlurredPyramid[0], edge_filter) #TODO: contrast stertching\ threshold
 
     if log: print('starting poisson solver')
 
-    diffused_img_sobel = to_python(eng.poisson_solver_function(to_matlab((0.5 * (W) + 1.0) * Gx, expand_dims = False),
-                                                    to_matlab((0.5 * (W) + 1.0) * Gy, expand_dims = False),
+    Wx = (0.5 * (W) + 1.0) * Gx
+    Wy = (0.5 * (W) + 1.0) * Gy
+    if log: save_results(scaled_img, Wx, 'Wx_canny')
+    if log: save_results(scaled_img, Wy, 'Wy2_canny')
+
+    diffused_img_sobel = to_python(eng.poisson_solver_function(to_matlab(Wx, expand_dims = False),
+                                                    to_matlab(Wy, expand_dims = False),
                                                     to_matlab(BlurredPyramid[0], expand_dims = False)), expand_dims = False)
     normalized = diffused_img_sobel / diffused_img_sobel.max()
     cropped = normalized[:-padR, :-padC]
@@ -104,6 +112,11 @@ def detect_edges(image, edge_filter=EdgeFilter.SOBEL_ND_IMAGE):
     elif EdgeFilter.SOBEL_CV2:
         Gx = cv2.Sobel(image, cv2.CV_64F, 1, 0)
         Gy = cv2.Sobel(image, cv2.CV_64F, 0, 1)
+        # TODO: use how we did in video assignment 1(kernel size 5 and compute Gx,Gy together) and add scharr
+    elif EdgeFilter.CANNY:
+        edge = cv2.Canny(img, 0.2, 0.7, apertureSize=5, L2gradient =True)
+        Gx = cv2.Sobel(edge, cv2.CV_64F, 1, 0)
+        Gy = cv2.Sobel(edge, cv2.CV_64F, 0, 1)
     return Gx,Gy
 
 
@@ -119,7 +132,7 @@ def save_results(origin, denoised, file_name):
 if __name__ == "__main__":
     file_name = 'benign_15.png'
     N = 4
-    file_name_extension = f'{N}_layers_lx2'
+    file_name_extension = f'{N}_layers_lx2_canny'
     save_name = f'{file_name[:-4]}_{file_name_extension}'
 
     img = cv2.imread(f'./data/{file_name}',0).astype(np.float32)/255.0
@@ -130,6 +143,6 @@ if __name__ == "__main__":
     # img = np.expand_dims(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 2)
     # img=np.random.rand(256,256,1)
     #CV2_img =denoise_img(img, laplacian, pyr_method=PyrMet hod.CV2, edge_filter=EdgeFilter.SOBEL_ND_IMAGE,file_name=file_name)
-    MATLAB_img =denoise_img(img, laplacian, pyr_levels=N, pyr_method=PyrMethod.MATLAB, edge_filter=EdgeFilter.SOBEL_ND_IMAGE, file_name=save_name,log=True)
+    MATLAB_img =denoise_img(img, laplacian, pyr_levels=N, pyr_method=PyrMethod.CV2, edge_filter=EdgeFilter.CANNY, file_name=save_name,log=True)
 
     #print(np.max(CV2_img-MATLAB_img))
