@@ -78,17 +78,17 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter, fi
                                                     to_matlab(BlurredPyramid[0], expand_dims = False)), expand_dims = False)
     
     
-    cropped = diffused_img_sobel[:-padR, :-padC]
-    min_clip = np.percentile(cropped, 10)
-    max_clip = np.percentile(cropped, 90)
-    clipped = np.clip(cropped, min_clip, max_clip)
+    # min_clip = np.percentile(cropped, 10)
+    # max_clip = np.percentile(cropped, 90)
+    # clipped = np.clip(cropped, min_clip, max_clip)
 
-    # normalized = diffused_img_sobel / diffused_img_sobel.max()
+    normalized = diffused_img_sobel / diffused_img_sobel.max()
+    cropped = normalized[:-padR, :-padC]
 
-    min_val=np.min(clipped)
-    max_val=np.max(clipped)
+    min_val=np.min(cropped)
+    max_val=np.max(cropped)
 
-    img_float=(clipped-min_val)/(max_val-min_val)
+    img_float=(cropped-min_val)/(max_val-min_val)
 
     # img_float = cv2.equalizeHist((img_float*255).astype(np.uint8))
 
