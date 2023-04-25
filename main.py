@@ -25,7 +25,7 @@ def clean_images(laplacian_filter,number_layers, edge_filter, preprocess_filter 
         img = cv2.imread(join(images_path, img_name),0).astype(np.float32) / 255.0
         noisy_img = np.expand_dims(img, 2)
         clean_image = denoise_img(noisy_img, laplacian_filter, number_layers, PyrMethod.CV2, 
-                                  edge_filter=edge_filter,preprocess_filter=preprocess_filter,postprocess_filter = Filters.NONE, log=True)
+                                  edge_filter=edge_filter,preprocess_filter=preprocess_filter,postprocess_filter = Filters.NONE, file_name=img_name, log=True)
 
         exp_name = f'{edge_filter.name}_{number_layers}_pre_{preprocess_filter.name}_post_{postprocess_filter.name}_{postfix}'
         exp_path = f'{results_path}\\{exp_name}'

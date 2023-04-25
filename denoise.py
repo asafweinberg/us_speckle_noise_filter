@@ -19,7 +19,7 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,pre
     # scaled_shape_int=(int(image.shape[0] * scale_factor),  int(image.shape[1] * scale_factor))
 
     if preprocess_filter is not Filters.NONE:
-        image = filter_image(image, preprocess_filter)
+        image = filter_image(image, preprocess_filter, file_name)
     
     if log: print('creating gaussian pyramid')
 
@@ -108,11 +108,12 @@ def detect_edges(image, edge_filter=EdgeFilter.SOBEL_ND_IMAGE):
     return Gx,Gy
 
 
-def filter_image(image, filter_type):
+def filter_image(image, filter_type, file_name=None):
     if filter_type == Filters.NLM:
         s = image.squeeze()
-        image = restoration.denoise_nl_means(s, h=0.02, patch_size=5, fast_mode=True)
-        image = np.expand_dims(image, 2)
+        filtered_image = restoration.denoise_nl_means(s, h=0.01, patch_size=5, fast_mode=True)
+        filtered_image = np.expand_dims(filtered_image, 2)
+        if file_name: save_results(image, filtered_image, file_name+'_NLM')
     
     return image
 
