@@ -7,21 +7,23 @@ from matlab_hadler import *
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from enums import *
+from skimage import io, img_as_float, restoration
 
 eng = matlab.engine.start_matlab()
 
 
 #input image in grey scale and type float_32
-def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter, file_name=None, log=False):
-    scale_factor = 0.7
+def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,preprocess_filter = Filters.NONE, postprocess_filter = Filters.NONE, file_name=None, log=False):
+    # scale_factor = 0.7
 
-    scaled_shape_int=(int(image.shape[0] * scale_factor),  int(image.shape[1] * scale_factor))
+    # scaled_shape_int=(int(image.shape[0] * scale_factor),  int(image.shape[1] * scale_factor))
 
-    scaled_img = image
+    if preprocess_filter is not Filters.NONE:
+        image = filter_image(image, preprocess_filter)
     
     if log: print('creating gaussian pyramid')
 
-    BlurredPyramid, padR, padC = create_pyramid(scaled_img, pyr_levels, pyr_method)
+    BlurredPyramid, padR, padC = create_pyramid(image, pyr_levels, pyr_method)
     W= np.abs(ndimage.convolve(np.abs(BlurredPyramid[pyr_levels-1]), laplacian_filter, mode='nearest'))
 
     if (W.max() > 0):
@@ -40,28 +42,6 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter, fi
     
     # if log: save_results(scaled_img, W, 'W')
 
-    # ----------------------------------cv2 Sobel--------------------------------------------------------
-
-    # kernel_x = np.array([1,0,-1,2,0,-2,1,0,-1]).reshape((3, 3))
-    # kernel_y = np.array([1,2,1,0,0,0,-1,-2,-1]).reshape((3, 3))
-
-    # # Gx = ndimage.convolve(np.abs(BlurredPyramid[0]), kernel_x, mode='nearest')
-    # # Gy = ndimage.convolve(np.abs(BlurredPyramid[0]), kernel_y, mode='nearest')
-
-    # diffused_img = to_python(eng.poisson_solver_function(to_matlab((0.5 * (W) + 1.0) * Gx, expand_dims = False),
-    #                                                      to_matlab((0.5 * (W) + 1.0) * Gy, expand_dims = False),
-    #                                                      to_matlab(BlurredPyramid[0], expand_dims = False)), expand_dims = False)
-
-    # # Rrgb = ConvertFormOpponentToRgb1( R );
-
-    # normalized = diffused_img / diffused_img.max()
-    # cropped = normalized[:-padR, :-padC]
-    # clipped = np.clip(cropped, 0, 1)
-    # plt.imsave(f'./results/{file_name}_cv2_sobel.png', clipped, cmap='gray')
-
-
-    # ----------------------------------ndimage Sobel--------------------------------------------------------
-    
     if log: print('edge detection')
 
     Gx, Gy = detect_edges(BlurredPyramid[0], edge_filter) #TODO: contrast stertching\ threshold
@@ -95,7 +75,7 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter, fi
     #clipped = cropped
     #clipped = np.clip(cropped, 0, 1)
     if file_name:
-        save_results(scaled_img, img_float, file_name)
+        save_results(image, img_float, file_name)
 
     return img_float
 
@@ -127,6 +107,14 @@ def detect_edges(image, edge_filter=EdgeFilter.SOBEL_ND_IMAGE):
         Gy = cv2.Sobel(edge, cv2.CV_64F, 0, 1)
     return Gx,Gy
 
+
+def filter_image(image, filter_type):
+    if filter_type == Filters.NLM:
+        s = image.squeeze()
+        image = restoration.denoise_nl_means(s, h=0.02, patch_size=5, fast_mode=True)
+        image = np.expand_dims(image, 2)
+    
+    return image
 
 def save_results(origin, denoised, file_name):
     _, axarr = plt.subplots(ncols=2, figsize=(14,14))

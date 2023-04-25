@@ -7,7 +7,7 @@ from skimage.util import random_noise
 from denoise import denoise_img
 from enums import *
 import matplotlib.pyplot as plt
-
+from skimage.metrics import structural_similarity as ssim
 from os import listdir
 from os.path import isfile, join
 
@@ -56,7 +56,8 @@ def run_metrics_on_img(img, laplacian_filter,number_layers, img_name):
     return({
         'mse': meansquareerror(img,clean_image),
         'signal2noise': signaltonoise(clean_image),
-        'psnr': psnr(img,clean_image)
+        'psnr': psnr(img,clean_image),
+        'ssim': ssim(img,clean_image)
     })
 
 
@@ -87,6 +88,9 @@ def psnr(src, dst):
         return 100
     PIXEL_MAX =255.0
     return 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
+
+def ssim(src, dst):
+    return ssim(src, dst)
 
 
 def print_results(metrics, avg=False):

@@ -8,3 +8,9 @@ class EdgeFilter(Enum):
     SOBEL_ND_IMAGE = auto()
     SOBEL_CV2 = auto()
     CANNY = auto()
+
+
+class Filters(Enum):
+    NONE = auto() 
+    NLM = auto()
+    BILATERAL = auto()

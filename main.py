@@ -14,7 +14,7 @@ def calc_metrics(laplacian_filter,number_layers):
 
 
 
-def clean_images(laplacian_filter,number_layers):
+def clean_images(laplacian_filter,number_layers, edge_filter, preprocess_filter = Filters.NONE, postprocess_filter = Filters.NONE, postfix=''):
     images_path=".\\test_images\\images"
     results_path=".\\test_images\\output"
 
@@ -24,8 +24,14 @@ def clean_images(laplacian_filter,number_layers):
     for img_name in images_names:
         img = cv2.imread(join(images_path, img_name),0).astype(np.float32) / 255.0
         noisy_img = np.expand_dims(img, 2)
-        clean_image = denoise_img(noisy_img, laplacian_filter, number_layers, PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_CV2,file_name='eq'+img_name, log=True)
-        save_image_results(img, clean_image,  f'{results_path}\\clip_final_pair_{img_name}')
+        clean_image = denoise_img(noisy_img, laplacian_filter, number_layers, PyrMethod.CV2, 
+                                  edge_filter=edge_filter,preprocess_filter=preprocess_filter,postprocess_filter = Filters.NONE, log=True)
+
+        exp_name = f'{edge_filter.name}_{number_layers}_pre_{preprocess_filter.name}_post_{postprocess_filter.name}_{postfix}'
+        exp_path = f'{results_path}\\{exp_name}'
+        if not os.path.exists(exp_path):
+            os.makedirs(exp_path)
+        save_image_results(img, clean_image,  f'{exp_path}\\{img_name}')
 
 
 
@@ -39,8 +45,11 @@ def save_image_results(origin, denoised, file_name):
 
 
 if __name__ == "__main__":
-    
     laplacian = np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
     number_layers=4
+    edge_filter = EdgeFilter.SOBEL_CV2
+    preprocess_filter = Filters.NLM
+    postprocess_filter = Filters.NLM
+
     # calc_metrics(laplacian,number_layers) 
-    clean_images(laplacian,number_layers) 
+    clean_images(laplacian,number_layers, edge_filter, preprocess_filter=preprocess_filter) 
