@@ -14,7 +14,7 @@ def calc_metrics(laplacian_filter,number_layers):
 
 
 
-def clean_images(laplacian_filter,number_layers, edge_filter, preprocess_filter = Filters.NONE, postprocess_filter = Filters.NONE, postfix=''):
+def clean_images(laplacian_filter,number_layers, edge_filter, preprocess_filter = Filters.NONE, postprocess_filter = Filters.NONE, suffix=''):
     images_path=".\\test_images\\images"
     results_path=".\\test_images\\output"
 
@@ -27,7 +27,7 @@ def clean_images(laplacian_filter,number_layers, edge_filter, preprocess_filter 
         clean_image = denoise_img(noisy_img, laplacian_filter, number_layers, PyrMethod.CV2, 
                                   edge_filter=edge_filter,preprocess_filter=preprocess_filter,postprocess_filter = Filters.NONE, file_name=img_name, log=True)
 
-        exp_name = f'{edge_filter.name}_{number_layers}_pre_{preprocess_filter.name}_post_{postprocess_filter.name}_{postfix}'
+        exp_name = f'{edge_filter.name}_{number_layers}_pre_{preprocess_filter.name}_post_{postprocess_filter.name}_{suffix}'
         exp_path = f'{results_path}\\{exp_name}'
         if not os.path.exists(exp_path):
             os.makedirs(exp_path)
