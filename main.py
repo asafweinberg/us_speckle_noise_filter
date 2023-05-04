@@ -8,31 +8,46 @@ from denoise import denoise_img
 from enums import *
 import matplotlib.pyplot as plt
 
+images_path=".\\test_images\\images"
+results_path=".\\test_images\\output"
+
 
 def calc_metrics(laplacian_filter,number_layers):
     run_metrics(laplacian_filter,number_layers) 
 
 
 
-def clean_images(laplacian_filter,number_layers, edge_filter, preprocess_filter = Filters.NONE, postprocess_filter = Filters.NONE, postfix=''):
-    images_path=".\\test_images\\images"
-    results_path=".\\test_images\\output"
-
+def denoise_multiple_same_method(laplacian_filter,number_layers, edge_filter, preprocess_filter = Filters.NONE, postprocess_filter = Filters.NONE, postfix=''):
     only_files = [f for f in listdir(images_path) if isfile(join(images_path, f))]
-    images_names=[f for f in only_files if ".png" in f]
+    images_names = [f for f in only_files if ".png" in f]
+    clean_images = {name: [] for name in images_names}
 
     for img_name in images_names:
-        img = cv2.imread(join(images_path, img_name),0).astype(np.float32) / 255.0
-        noisy_img = np.expand_dims(img, 2)
-        clean_image = denoise_img(noisy_img, laplacian_filter, number_layers, PyrMethod.CV2, 
-                                  edge_filter=edge_filter,preprocess_filter=preprocess_filter,postprocess_filter = Filters.NONE, file_name=img_name, log=True)
+        denoise_single_image(img_name, 
+                             laplacian_filter,
+                             number_layers, 
+                             edge_filter, 
+                             preprocess_filter, 
+                             postprocess_filter, 
+                             postfix)
+        clean_images[img_name].append(())
+        
 
-        exp_name = f'{edge_filter.name}_{number_layers}_pre_{preprocess_filter.name}_post_{postprocess_filter.name}_{postfix}'
-        exp_path = f'{results_path}\\{exp_name}'
-        if not os.path.exists(exp_path):
-            os.makedirs(exp_path)
-        save_image_results(img, clean_image,  f'{exp_path}\\{img_name}')
 
+def denoise_single_image(img_name,laplacian_filter, number_layers, edge_filter, preprocess_filter = Filters.NONE, postprocess_filter = Filters.NONE, postfix='')
+    img = cv2.imread(join(images_path, img_name),0).astype(np.float32) / 255.0
+    noisy_img = np.expand_dims(img, 2)
+    clean_image = denoise_img(noisy_img, laplacian_filter, number_layers, PyrMethod.CV2, 
+                                edge_filter=edge_filter,preprocess_filter=preprocess_filter,postprocess_filter = Filters.NONE, file_name=img_name, log=True)
+
+    exp_path = f'{results_path}\\{exp_name}'
+    if not os.path.exists(exp_path):
+        os.makedirs(exp_path)
+    save_image_results(img, clean_image,  f'{exp_path}\\{img_name}')
+    return clean_image
+
+def get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter):
+    exp_name = f'{edge_filter.name}_{number_layers}_pre_{preprocess_filter.name}_post_{postprocess_filter.name}_{postfix}'
 
 
 def save_image_results(origin, denoised, file_name):
