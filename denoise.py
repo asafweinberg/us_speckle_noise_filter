@@ -8,15 +8,17 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 from enums import *
 from skimage import io, img_as_float, restoration
+import skimage
 
 eng = matlab.engine.start_matlab()
 
 
 #input image in grey scale and type float_32
-def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,preprocess_filter = Filters.NONE, postprocess_filter = Filters.NONE, file_name=None, log=False):
+def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,preprocess_filter = Filters.NONE, postprocess_filter = Filters.NONE, file_name=None, log=False, range_correction=Range.hist_match):
     # scale_factor = 0.7
 
     # scaled_shape_int=(int(image.shape[0] * scale_factor),  int(image.shape[1] * scale_factor))
+    original_image=image.squeeze()
 
     if preprocess_filter is not Filters.NONE:
         image = filter_image(image, preprocess_filter, file_name)
@@ -58,22 +60,11 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,pre
                                                     to_matlab(BlurredPyramid[0], expand_dims = False)), expand_dims = False)
     
     
-    # min_clip = np.percentile(cropped, 10)
-    # max_clip = np.percentile(cropped, 90)
-    # clipped = np.clip(cropped, min_clip, max_clip)
-
     normalized = diffused_img_sobel / diffused_img_sobel.max()
     cropped = normalized[:-padR, :-padC]
 
-    min_val=np.min(cropped)
-    max_val=np.max(cropped)
-
-    img_float=(cropped-min_val)/(max_val-min_val)
-
-    # img_float = cv2.equalizeHist((img_float*255).astype(np.uint8))
-
-    #clipped = cropped
-    #clipped = np.clip(cropped, 0, 1)
+    img_float = correct_range(cropped, original_image, range_correction)
+    
     if file_name:
         save_results(image, img_float, file_name)
 
@@ -117,6 +108,16 @@ def filter_image(image, filter_type, file_name=None):
     
     return image
 
+def correct_range(image, original_image, range_correction):
+    if range_correction==Range.hist_match:
+        return skimage.exposure.match_histograms(image, original_image)
+
+    if range_correction==Range.contrast_stretch:
+        min_val=np.min(image)
+        max_val=np.max(image)
+        img_float=(image-min_val)/(max_val-min_val)
+        return img_float
+
 def save_results(origin, denoised, file_name):
     _, axarr = plt.subplots(ncols=2, figsize=(14,14))
     axarr[0].imshow(origin, cmap='gray')
@@ -127,12 +128,12 @@ def save_results(origin, denoised, file_name):
 
 
 if __name__ == "__main__":
-    file_name = 'UStest.png'
+    file_name = 'malignant (1).png'
     N = 4
-    file_name_extension = f'{N}_layers_lx2_canny'
+    file_name_extension = f'{N}_layers_lx2_Sobel_noHist'
     save_name = f'{file_name[:-4]}_{file_name_extension}'
 
-    img = cv2.imread(f'./data/{file_name}',0).astype(np.float32)/255.0
+    img = cv2.imread(f'./test_images/images/{file_name}',0).astype(np.float32)/255.0
     laplacian = np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
 
     img = np.expand_dims(img, 2) #adds another dim
@@ -140,6 +141,8 @@ if __name__ == "__main__":
     # img = np.expand_dims(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 2)
     # img=np.random.rand(256,256,1)
     #CV2_img =denoise_img(img, laplacian, pyr_method=PyrMet hod.CV2, edge_filter=EdgeFilter.SOBEL_ND_IMAGE,file_name=file_name)
-    MATLAB_img =denoise_img(img, laplacian, pyr_levels=N, pyr_method=PyrMethod.CV2, edge_filter=EdgeFilter.CANNY, file_name=save_name,log=True)
-
+    MATLAB_img =denoise_img(img, laplacian, pyr_levels=N, pyr_method=PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_CV2, file_name=save_name,log=True)
+    #plt.imsave("range_test_result.png",MATLAB_img)
+    #plt.imshow(MATLAB_img,cmap="gray")
+    #plt.show()
     #print(np.max(CV2_img-MATLAB_img))

@@ -14,3 +14,7 @@ class Filters(Enum):
     NONE = auto() 
     NLM = auto()
     BILATERAL = auto()
+
+class Range(Enum):
+    hist_match = auto() 
+    contrast_stretch = auto()
