@@ -16,5 +16,6 @@ class Filters(Enum):
     BILATERAL = auto()
 
 class Range(Enum):
-    hist_match = auto() 
-    contrast_stretch = auto()
+    HIST_MATCH = auto() 
+    NORMALIZE = auto()
+    CONTRAST_STRETCH = auto()
