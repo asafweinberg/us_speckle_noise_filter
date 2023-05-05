@@ -85,14 +85,14 @@ def pyramid_up(W, method):
         return cv2.pyrUp(W)
 
 def detect_edges(image, edge_filter=EdgeFilter.SOBEL_ND_IMAGE):
-    if EdgeFilter.SOBEL_ND_IMAGE:
+    if edge_filter == EdgeFilter.SOBEL_ND_IMAGE:
         Gy = ndimage.sobel(image,axis=0,mode='constant')
         Gx = ndimage.sobel(image,axis=1,mode='constant')
-    elif EdgeFilter.SOBEL_CV2:
+    elif edge_filter == EdgeFilter.SOBEL_CV2:
         Gx = cv2.Sobel(image, cv2.CV_64F, 1, 0)
         Gy = cv2.Sobel(image, cv2.CV_64F, 0, 1)
         # TODO: use how we did in video assignment 1(kernel size 5 and compute Gx,Gy together) and add scharr
-    elif EdgeFilter.CANNY:
+    elif edge_filter == EdgeFilter.CANNY:
         edge = cv2.Canny(img, 0.2, 0.7, apertureSize=5, L2gradient =True)
         Gx = cv2.Sobel(edge, cv2.CV_64F, 1, 0)
         Gy = cv2.Sobel(edge, cv2.CV_64F, 0, 1)
