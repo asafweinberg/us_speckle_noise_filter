@@ -1,3 +1,4 @@
+from denoise import denoise_img
 import numpy as np
 import cv2
 import math
@@ -13,10 +14,14 @@ from os.path import isfile, join
 
 mean = 0
 noise_variance = 0.04
-images_path=".\\metrics\\images"
-results_path=".\\metrics\\output"
+images_path="./metrics/images/US_images"
+results_path="./metrics/output"
+#results_path=".\\metrics\\output"
+metrics_path="./metrics/results_metrics_file.txt"
+#metrics_path=".\\metrics\\results_metrics_file.txt"
 
 def run_metrics(laplacian_filter,number_layers):
+    f = open(metrics_path,'w')
     only_files = [f for f in listdir(images_path) if isfile(join(images_path, f))]
     images_names=[f for f in only_files if ".png" in f]
     average_results={
@@ -39,6 +44,7 @@ def run_metrics(laplacian_filter,number_layers):
         print_results(result)
     
     print_results(average_results, avg=True)
+    
 
     with open(os.path.join(results_path, 'metric_results.txt'), "w") as file:
         for key, value in average_results.items():
@@ -49,7 +55,7 @@ def run_metrics_on_img(img, laplacian_filter,number_layers, img_name):
     # plt.imsave(f'.\\metrics\\images\\noisy_{img_name}', noisy_img, cmap='gray')
     noisy_img = np.expand_dims(noisy_img, 2)
 
-    clean_image = denoise_img(noisy_img, laplacian_filter, number_layers, PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_CV2,file_name="LenaCV2", log=True)
+    clean_image = denoise_img(noisy_img, laplacian_filter, number_layers, pyr_method =PyrMethod.CV2 ,edge_filter=EdgeFilter.SOBEL_CV2,file_name=None, log=True)
     # plt.imsave(f'.\\metrics\\images\\clean_{img_name}', clean_image, cmap='gray')
     save_image_results(noisy_img, clean_image, f'{results_path}\\final_pair_{img_name}')
                        
@@ -57,7 +63,7 @@ def run_metrics_on_img(img, laplacian_filter,number_layers, img_name):
         'mse': meansquareerror(img,clean_image),
         'signal2noise': signaltonoise(clean_image),
         'psnr': psnr(img,clean_image),
-        'ssim': ssim(img,clean_image)
+        'ssim': ssim(img,clean_image,data_range=clean_image.max() - clean_image.min())
     })
 
 
@@ -89,13 +95,14 @@ def psnr(src, dst):
     PIXEL_MAX =255.0
     return 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
 
-def ssim(src, dst):
-    return ssim(src, dst)
+# def calc_ssim(src, dst):
+#     return ssim(src, dst)
 
 
 def print_results(metrics, avg=False):
-    if avg: print('Average:')
+    if avg: print('Average: ')
     print(f'MSE: {metrics["mse"]},    signal2noise: {metrics["signal2noise"]},    PSNR: {metrics["psnr"]}')
+
 
 def save_image_results(origin, denoised, file_name):
     _, axarr = plt.subplots(ncols=2, figsize=(14,14))

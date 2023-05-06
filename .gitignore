@@ -3,7 +3,7 @@
 
 test_images/output
 test_images/output.zip
-metrics/output
+metrics/output/*
 metrics/*.zip
 results/
 
