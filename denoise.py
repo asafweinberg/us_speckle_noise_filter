@@ -21,7 +21,7 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,pre
     original_image=image.squeeze()
 
     if preprocess_filter is not Filters.NONE:
-        image = filter_image(original_image, preprocess_filter, file_name)
+        image = filter_image(original_image, preprocess_filter)
         image = np.expand_dims(image, 2)
     
     if log: print('creating gaussian pyramid')
@@ -65,7 +65,7 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,pre
     cropped = normalized[:-padR, :-padC]
 
     if postprocess_filter is not Filters.NONE:
-        cropped = filter_image(cropped, postprocess_filter, file_name)
+        cropped = filter_image(cropped, postprocess_filter)
     
 
     img_float = correct_range(cropped, original_image, range_correction)
@@ -118,7 +118,7 @@ def contrast_strech_transform(image, f1=0.2, f2=0.8, alpha=0.5, beta=1.3333, gam
 
 
 
-def filter_image(image, filter_type, file_name=None):
+def filter_image(image, filter_type):
     if filter_type == Filters.NLM:
         s = image.squeeze()
         filtered_image = restoration.denoise_nl_means(s, h=0.01, patch_size=5, fast_mode=True)

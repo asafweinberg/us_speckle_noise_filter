@@ -1,5 +1,5 @@
 import numpy as np
-from metrics.metrics import run_metrics
+from metrics import run_metrics
 import os
 from os import listdir
 from os.path import isfile, join
@@ -166,3 +166,5 @@ if __name__ == "__main__":
     # calc_metrics(laplacian,number_layers) 
     # clean_images(laplacian,number_layers, edge_filter, preprocess_filter=preprocess_filter) 
     run_many_experiments(laplacian, [19])
+    calc_metrics(laplacian) 
+    #clean_images(laplacian,number_layers, edge_filter, preprocess_filter=preprocess_filter) 

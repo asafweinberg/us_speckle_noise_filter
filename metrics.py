@@ -1,3 +1,4 @@
+from denoise import denoise_img
 import numpy as np
 import cv2
 import math
@@ -14,8 +15,11 @@ from tqdm import tqdm
 
 mean = 0
 noise_variance = 0.04
-images_path=".\\metrics\\images"
-results_path=".\\metrics\\output"
+images_path="./metrics/images/US_images"
+results_path="./metrics/output"
+#results_path=".\\metrics\\output"
+metrics_path="./metrics/results_metrics_file.txt"
+#metrics_path=".\\metrics\\results_metrics_file.txt"
 
 def run_metrics(laplacian_filter,
                 number_layers, 
@@ -85,7 +89,7 @@ def run_metrics_on_img(img,
         'mse': meansquareerror(img,clean_image),
         'signal2noise': signaltonoise(clean_image),
         'psnr': psnr(img,clean_image),
-        'ssim': ssim(img,clean_image)
+        'ssim': ssim(img,clean_image,data_range=clean_image.max() - clean_image.min())
     })
 
 
@@ -117,8 +121,8 @@ def psnr(src, dst):
     PIXEL_MAX =255.0
     return 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
 
-def ssim(src, dst):
-    return ssim(src, dst)
+# def calc_ssim(src, dst):
+#     return ssim(src, dst)
 
 
 def print_results(metrics, avg=False, print=True):
@@ -128,6 +132,7 @@ def print_results(metrics, avg=False, print=True):
         print(results_str)
     else:
         return results_str
+
 
 def save_image_results(origin, denoised, file_name):
     _, axarr = plt.subplots(ncols=2, figsize=(14,14))
