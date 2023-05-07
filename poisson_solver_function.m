@@ -25,7 +25,7 @@ clear j k gxx gyy gyyd gxxd
 % boundary image contains image intensities at boundaries
 boundary_image(2:end-1,2:end-1) = 0;
 
-disp('Solving Poisson Equation Using DST'); tic
+tic
 j = 2:H-1;
 k = 2:W-1;
 f_bp = zeros(H,W);
@@ -50,7 +50,6 @@ clear f3;
 img_tt = idst(tt')';
 clear tt
 time_used = toc;
-fprintf('Time for Poisson Reconstruction = %f secs\n',time_used);
 % put solution in inner points; outer points obtained from boundary image
 img_direct = boundary_image;
 img_direct(2:end-1,2:end-1) = 0;

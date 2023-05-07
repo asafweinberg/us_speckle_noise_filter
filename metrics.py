@@ -15,19 +15,19 @@ from tqdm import tqdm
 
 mean = 0
 noise_variance = 0.04
-images_path="./metrics/images/US_images"
+general_images_path="./metrics/images/general_images"
+us_images_path="./metrics/images/US_images"
 results_path="./metrics/output"
-#results_path=".\\metrics\\output"
-metrics_path="./metrics/results_metrics_file.txt"
-#metrics_path=".\\metrics\\results_metrics_file.txt"
 
 def run_metrics(laplacian_filter,
                 number_layers, 
                 edge_filter, 
                 preprocess_filter = Filters.NONE, 
                 postprocess_filter = Filters.NONE,
-                range_correction = Range.hist_match,
+                range_correction = Range.HIST_MATCH,
+                run_on_us_images=True,
                 log_results=True):
+    images_path = us_images_path if run_on_us_images else general_images_path
     only_files = [f for f in listdir(images_path) if isfile(join(images_path, f))]
     images_names=[f for f in only_files if ".png" in f]
     average_results={
@@ -61,8 +61,9 @@ def run_metrics(laplacian_filter,
         with open(os.path.join(results_path, 'metric_results.txt'), "w") as file:
             for key, value in average_results.items():
                 file.write(f"{key}: {value}\n")
+        return average_results
     else:
-        return print_results(average_results, avg=True, print=False)
+        return average_results
 
 def run_metrics_on_img(img, 
                        laplacian_filter,
@@ -70,7 +71,7 @@ def run_metrics_on_img(img,
                        edge_filter, 
                        preprocess_filter = Filters.NONE, 
                        postprocess_filter = Filters.NONE,
-                       range_correction = Range.hist_match, 
+                       range_correction = Range.HIST_MATCH, 
                        img_name=None):
     noisy_img = add_speckle_noise(img)
     # plt.imsave(f'.\\metrics\\images\\noisy_{img_name}', noisy_img, cmap='gray')
@@ -125,9 +126,9 @@ def psnr(src, dst):
 #     return ssim(src, dst)
 
 
-def print_results(metrics, avg=False, print=True):
+def print_results(metrics, avg=False, log_results=True):
     results_str = f'MSE: {metrics["mse"]},    signal2noise: {metrics["signal2noise"]},    PSNR: {metrics["psnr"]},     SSIM: {metrics["ssim"]}'
-    if print:
+    if log_results:
         if avg: print('Average:')
         print(results_str)
     else:
