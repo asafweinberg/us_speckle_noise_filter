@@ -15,9 +15,12 @@ eng = matlab.engine.start_matlab()
 
 #input image in grey scale and type float_32
 def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,preprocess_filter = Filters.NONE, postprocess_filter = Filters.NONE, file_name=None, log=False, range_correction=Range.HIST_MATCH):
-    # scale_factor = 0.7
+    if max(image.shape)>1024: 
+        scale_factor = 0.5
+        scaled_shape_int=(int(image.shape[1] * scale_factor), int(image.shape[0] * scale_factor))
+        image=cv2.resize(image, scaled_shape_int)
+        image = np.expand_dims(image, 2)
 
-    # scaled_shape_int=(int(image.shape[0] * scale_factor),  int(image.shape[1] * scale_factor))
     original_image=image.squeeze()
 
     if preprocess_filter is not Filters.NONE:

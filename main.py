@@ -46,10 +46,10 @@ def create_metrics_def(laplacian_filter, run_on_us_images):
 def create_experiments_def(laplacian_filter, images_to_run):
     return [
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NONE, Range.HIST_MATCH, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NONE, Range.CONTRAST_STRETCH, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NONE, Range.NORMALIZE, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.BILATERAL, Range.HIST_MATCH, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.BILATERAL, Filters.NONE, Range.HIST_MATCH, images_to_run),
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NLM, Filters.NONE, Range.HIST_MATCH, images_to_run),
-        (laplacian_filter, 6, EdgeFilter.SOBEL_CV2, Filters.NLM, Filters.NONE, Range.HIST_MATCH, images_to_run)
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NLM, Range.HIST_MATCH, images_to_run)
     ]
 
 def calc_metrics(laplacian_filter):
@@ -151,14 +151,15 @@ def denoise_single_image(img_name,
                               preprocess_filter=preprocess_filter,
                               postprocess_filter = postprocess_filter,
                               range_correction = range_correction,
-                              log=True)
+                              log=False)
     exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter,range_correction)
 
     exp_path = f'{results_path}\\{exp_name}'
     if not os.path.exists(exp_path):
         os.makedirs(exp_path)
     current_exp_path = f'{exp_path}\\{time}'
-    os.makedirs(current_exp_path)    
+    if not os.path.exists(current_exp_path):
+        os.makedirs(current_exp_path)    
     save_image_results(img, clean_image,  f'{current_exp_path}\\{img_name}')
     return clean_image
 
@@ -181,7 +182,7 @@ def save_grid_images(image_name, images):
             ax.label_outer()
     
     plt.tight_layout()
-    plt.savefig(f'{results_path}\\experiments_{image_name}')
+    plt.savefig(f'{results_path}\\experiments_{time}_{image_name}')
 
 
 def save_image_results(origin, denoised, file_name):
@@ -201,5 +202,5 @@ if __name__ == "__main__":
     postprocess_filter = Filters.NLM
 
 
-    # run_many_experiments(laplacian, [19])
-    calc_metrics(laplacian) 
+    run_many_experiments(laplacian, [19,38])
+    # calc_metrics(laplacian) 
