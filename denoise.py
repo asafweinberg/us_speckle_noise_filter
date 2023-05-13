@@ -10,6 +10,8 @@ from enums import *
 from skimage import io, img_as_float, restoration
 import skimage
 
+from poisson_solver import poisson_solver_py
+
 eng = matlab.engine.start_matlab()
 
 
@@ -59,9 +61,12 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,pre
     # if log: save_results(scaled_img, Wx, 'Wx_canny')
     # if log: save_results(scaled_img, Wy, 'Wy2_canny')
 
-    diffused_img_sobel = to_python(eng.poisson_solver_function(to_matlab(Wx, expand_dims = False),
-                                                    to_matlab(Wy, expand_dims = False),
-                                                    to_matlab(BlurredPyramid[0], expand_dims = False)), expand_dims = False)
+
+    diffused_img_sobel = poisson_solver_py(Wx, Wy, BlurredPyramid[0])
+
+    # diffused_img_sobel = to_python(eng.poisson_solver_function(to_matlab(Wx, expand_dims = False),
+    #                                                 to_matlab(Wy, expand_dims = False),
+    #                                                 to_matlab(BlurredPyramid[0], expand_dims = False)), expand_dims = False)
     
     
     normalized = diffused_img_sobel / diffused_img_sobel.max()
@@ -101,7 +106,9 @@ def detect_edges(image, edge_filter=EdgeFilter.SOBEL_ND_IMAGE):
     elif edge_filter == EdgeFilter.SOBEL_CV2:
         Gx = cv2.Sobel(image, cv2.CV_64F, 1, 0)
         Gy = cv2.Sobel(image, cv2.CV_64F, 0, 1)
-        # TODO: use how we did in video assignment 1(kernel size 5 and compute Gx,Gy together) and add scharr
+    elif edge_filter == EdgeFilter.SCHARR:
+        Gx = cv2.Scharr(image, cv2.CV_64F, 1, 0)
+        Gy = cv2.Scharr(image, cv2.CV_64F, 0, 1) 
     elif edge_filter == EdgeFilter.CANNY:
         edge = cv2.Canny((image*255).astype(np.uint8), 0.2, 0.7, apertureSize=5, L2gradient =True)
         Gx = cv2.Sobel(edge, cv2.CV_64F, 1, 0)
@@ -159,23 +166,17 @@ def save_results(origin, denoised, file_name):
 
 
 if __name__ == "__main__":
-    file_name = 'malignant (19).png'
+    file_name = 'UStest.png'
     N = 4
-    file_name_extension = f'{N}_layers_lx2_Sobel_CONT_STRECH'
+    file_name_extension = f'poisson_python'
     save_name = f'{file_name[:-4]}_{file_name_extension}'
 
-    img = cv2.imread(f'./test_images/images/{file_name}',0).astype(np.float32)/255.0
+    img = cv2.imread(f'./data/{file_name}',0).astype(np.float32)/255.0
     laplacian = np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
 
     img = np.expand_dims(img, 2) #adds another dim
 
-    # img = np.expand_dims(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 2)
-    # img=np.random.rand(256,256,1)
-    #CV2_img =denoise_img(img, laplacian, pyr_method=PyrMet hod.CV2, edge_filter=EdgeFilter.SOBEL_ND_IMAGE,file_name=file_name)
-    #MATLAB_img =denoise_img(img, laplacian, pyr_levels=N, pyr_method=PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_CV2,preprocess_filter=Filters.BILATERAL,file_name=save_name,log=True)
+   
     MATLAB_img =denoise_img(img, laplacian, pyr_levels=N, pyr_method=PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_CV2,file_name=save_name,log=True,range_correction=Range.CONTRAST_STRETCH)
 
-    #plt.imsave("range_test_result.png",MATLAB_img)
-    #plt.imshow(MATLAB_img,cmap="gray")
-    #plt.show()
-    #print(np.max(CV2_img-MATLAB_img))
+
