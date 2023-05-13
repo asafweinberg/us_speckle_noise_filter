@@ -103,7 +103,7 @@ def detect_edges(image, edge_filter=EdgeFilter.SOBEL_ND_IMAGE):
         Gy = cv2.Sobel(image, cv2.CV_64F, 0, 1)
         # TODO: use how we did in video assignment 1(kernel size 5 and compute Gx,Gy together) and add scharr
     elif edge_filter == EdgeFilter.CANNY:
-        edge = cv2.Canny(img, 0.2, 0.7, apertureSize=5, L2gradient =True)
+        edge = cv2.Canny((image*255).astype(np.uint8), 0.2, 0.7, apertureSize=5, L2gradient =True)
         Gx = cv2.Sobel(edge, cv2.CV_64F, 1, 0)
         Gy = cv2.Sobel(edge, cv2.CV_64F, 0, 1)
     return Gx,Gy
@@ -123,14 +123,13 @@ def contrast_strech_transform(image, f1=0.2, f2=0.8, alpha=0.5, beta=1.3333, gam
 
 def filter_image(image, filter_type):
     if filter_type == Filters.NLM:
-        s = image.squeeze()
-        filtered_image = restoration.denoise_nl_means(s, h=0.01, patch_size=5, fast_mode=True)
-        filtered_image = np.expand_dims(filtered_image, 2)
-    
-    if filter_type == Filters.BILATERAL:
-        image = image.astype("float32")
-        image = cv2.bilateralFilter(image, 5, 2, 2)
-    return image
+        filtered_image = restoration.denoise_nl_means(image, h=0.01, patch_size=5, fast_mode=True)
+    elif filter_type == Filters.BILATERAL:
+        filtered_image = cv2.bilateralFilter(image.astype(np.float32), 5, 2, 2)
+
+        #save_results(image)
+
+    return filtered_image
 
 def correct_range(image, original_image, range_correction):
     if range_correction==Range.HIST_MATCH:

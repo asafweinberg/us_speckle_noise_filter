@@ -25,31 +25,31 @@ def create_metrics_def(laplacian_filter, run_on_us_images):
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NONE, Range.CONTRAST_STRETCH, run_on_us_images),
 
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NLM, Filters.NONE, Range.HIST_MATCH, run_on_us_images),
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NLM, Filters.NONE, Range.NORMALIZE, run_on_us_images),
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NLM, Filters.NONE, Range.CONTRAST_STRETCH, run_on_us_images),
 
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.BILATERAL, Filters.NONE, Range.HIST_MATCH, run_on_us_images),
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.BILATERAL, Filters.NONE, Range.NORMALIZE, run_on_us_images),
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.BILATERAL, Filters.NONE, Range.CONTRAST_STRETCH, run_on_us_images),
 
-        (laplacian_filter, 6, EdgeFilter.SOBEL_CV2, Filters.NLM, Filters.NONE, Range.HIST_MATCH, run_on_us_images),
-        (laplacian_filter, 6, EdgeFilter.SOBEL_CV2, Filters.BILATERAL, Filters.NONE, Range.HIST_MATCH, run_on_us_images),
 
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NLM, Range.HIST_MATCH, run_on_us_images),
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NLM, Range.NORMALIZE, run_on_us_images),
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NLM, Range.CONTRAST_STRETCH, run_on_us_images),
 
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.BILATERAL, Range.HIST_MATCH, run_on_us_images),
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.BILATERAL, Range.NORMALIZE, run_on_us_images),
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.BILATERAL, Range.CONTRAST_STRETCH, run_on_us_images),
 
-        (laplacian_filter, 6, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NLM, Range.HIST_MATCH, run_on_us_images),
-        (laplacian_filter, 6, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.BILATERAL, Range.HIST_MATCH, run_on_us_images)
     ]
 
 def create_experiments_def(laplacian_filter, images_to_run):
     return [
-        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.BILATERAL, Filters.NONE, Range.CONTRAST_STRETCH, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.BILATERAL, Range.CONTRAST_STRETCH, images_to_run),
-        (laplacian_filter, 6, EdgeFilter.SOBEL_CV2, Filters.BILATERAL, Filters.NONE, Range.HIST_MATCH, images_to_run),
-        (laplacian_filter, 6, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.BILATERAL, Range.HIST_MATCH, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.BILATERAL, Range.HIST_MATCH, images_to_run)
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.BILATERAL, Filters.NONE, Range.NORMALIZE, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.BILATERAL, Range.NORMALIZE, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NLM, Filters.NONE, Range.HIST_MATCH, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NLM, Range.HIST_MATCH, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.BILATERAL, Filters.NLM, Range.HIST_MATCH, images_to_run)
     ]
 
 def calc_metrics(laplacian_filter):
@@ -202,5 +202,5 @@ if __name__ == "__main__":
     postprocess_filter = Filters.NLM
 
 
-    run_many_experiments(laplacian, [1,2])
-    # calc_metrics(laplacian) 
+    #run_many_experiments(laplacian, [1,19,35])
+    calc_metrics(laplacian) 
