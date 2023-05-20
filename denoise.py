@@ -137,6 +137,10 @@ def filter_image(image, filter_type):
     if filter_type == Filters.BILATERAL:
         image = image.astype("float32")
         image = cv2.bilateralFilter(image, 5, 2, 2)
+    if filter_type == Filters.KUAN:
+        image =  restoration.denoise_tv_chambolle(image, weight=0.05)
+
+
     return image
 
 def correct_range(image, original_image, range_correction):
