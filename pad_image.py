@@ -5,8 +5,8 @@ import matlab.engine
 #% Pad with zeros for a rectangular 2-factored image:
 #    %padFactor = 2^(N+1);
 def pad_image_with_bounderies(img):
-    padFactor = 10
-    # padFactor = int(np.ceil(np.log2(max(*img.shape))))
+    # padFactor = 10
+    padFactor = int(np.ceil(np.log2(max(*img.shape))))
     padFactor=2**padFactor
     h,w,d = img.shape
     

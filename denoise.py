@@ -169,16 +169,17 @@ def linear_then_bright(image, f1=0.2, f2=0.8, g2=0.95 ):
 
 def filter_image(image, filter_type):
     if filter_type == Filters.NLM:
-        filtered_image = restoration.denoise_nl_means(image, h=0.01, patch_size=5, fast_mode=True)
-        #filtered_image = restoration.denoise_nl_means(image, h=0.05, patch_size=5, fast_mode=True)
+        s = image.squeeze()
+        filtered_image = restoration.denoise_nl_means(s, h=0.01, patch_size=5, fast_mode=True)
+        filtered_image = np.expand_dims(filtered_image, 2)
     elif filter_type == Filters.BILATERAL:
-        filtered_image = cv2.bilateralFilter(image.astype(np.float32), 5, 0.5, 0.5)
-        #filtered_image = cv2.bilateralFilter(image.astype(np.float32), 7, 7, 2)
-        #filtered_image = cv2.bilateralFilter(image.astype(np.float32), 3, 2, 2)
+        image = image.astype("float32")
+        image = cv2.bilateralFilter(image, 5, 2, 2)
+    elif filter_type == Filters.KUAN:
+        image =  restoration.denoise_tv_chambolle(image, weight=0.05)
 
-        #save_results(image)
 
-    return filtered_image
+    return image
 
 def correct_range(image, original_image, range_correction):
 

@@ -9,12 +9,14 @@ class EdgeFilter(Enum):
     SOBEL_CV2 = auto()
     CANNY = auto()
     SCHARR = auto()
+    ICOV = auto()
 
 
 class Filters(Enum):
     NONE = auto() 
     NLM = auto()
-    BILATERAL = auto()
+    BILATERAL = auto(),
+    KUAN = auto()
 
 class Range(Enum):
     HIST_MATCH = auto() 
@@ -25,3 +27,15 @@ class Range(Enum):
     DARK_GAMMA = auto()
     AHE = auto()
     LINEAR_BRIGHT=auto()
+
+
+class Methods(Enum):
+    GAUSSIAN= auto()
+    MEDIAN= auto()
+    BILATERAL= auto()
+    NLM= auto(),
+    KUAN= auto(),
+    LEE= auto(),
+    SRAD= auto(),
+    OURS=auto()
+
