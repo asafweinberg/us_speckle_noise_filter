@@ -20,3 +20,8 @@ class Range(Enum):
     HIST_MATCH = auto() 
     NORMALIZE = auto()
     CONTRAST_STRETCH = auto()
+    LOW_BRIGHNTNESS = auto()
+    BRIGHT_GAMMA = auto()
+    DARK_GAMMA = auto()
+    AHE = auto()
+    LINEAR_BRIGHT=auto()
