@@ -25,31 +25,32 @@ def create_metrics_def(laplacian_filter, run_on_us_images):
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NONE, Range.CONTRAST_STRETCH, run_on_us_images),
 
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NLM, Filters.NONE, Range.HIST_MATCH, run_on_us_images),
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NLM, Filters.NONE, Range.NORMALIZE, run_on_us_images),
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NLM, Filters.NONE, Range.CONTRAST_STRETCH, run_on_us_images),
 
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.BILATERAL, Filters.NONE, Range.HIST_MATCH, run_on_us_images),
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.BILATERAL, Filters.NONE, Range.NORMALIZE, run_on_us_images),
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.BILATERAL, Filters.NONE, Range.CONTRAST_STRETCH, run_on_us_images),
 
-        (laplacian_filter, 6, EdgeFilter.SOBEL_CV2, Filters.NLM, Filters.NONE, Range.HIST_MATCH, run_on_us_images),
-        (laplacian_filter, 6, EdgeFilter.SOBEL_CV2, Filters.BILATERAL, Filters.NONE, Range.HIST_MATCH, run_on_us_images),
 
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NLM, Range.HIST_MATCH, run_on_us_images),
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NLM, Range.NORMALIZE, run_on_us_images),
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NLM, Range.CONTRAST_STRETCH, run_on_us_images),
 
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.BILATERAL, Range.HIST_MATCH, run_on_us_images),
+        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.BILATERAL, Range.NORMALIZE, run_on_us_images),
         (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.BILATERAL, Range.CONTRAST_STRETCH, run_on_us_images),
 
-        (laplacian_filter, 6, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NLM, Range.HIST_MATCH, run_on_us_images),
-        (laplacian_filter, 6, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.BILATERAL, Range.HIST_MATCH, run_on_us_images)
     ]
 
 def create_experiments_def(laplacian_filter, images_to_run):
     return [
-        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NONE, Range.HIST_MATCH, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.BILATERAL, Range.HIST_MATCH, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.BILATERAL, Filters.NONE, Range.HIST_MATCH, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NLM, Filters.NONE, Range.HIST_MATCH, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SOBEL_CV2, Filters.NONE, Filters.NLM, Range.HIST_MATCH, images_to_run)
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.BILATERAL, Filters.NONE, Range.NORMALIZE, 1, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.BILATERAL, Filters.NONE, Range.NORMALIZE, 2, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1 ,images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 4, images_to_run)
+
     ]
 
 def calc_metrics(laplacian_filter):
@@ -107,10 +108,11 @@ def denoise_multiple_same_method(laplacian_filter,
                                  preprocess_filter = Filters.NONE, 
                                  postprocess_filter = Filters.NONE,
                                  range_correction = Range.HIST_MATCH,
+                                 diffusion_times = 1,
                                  images_to_run = None):
     only_files = [f for f in listdir(images_path) if isfile(join(images_path, f))]
     images_names = [f for f in only_files if ".png" in f]
-    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction)
+    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times)
 
     if images_to_run:
         images_names = [name for name in images_names if len([id for id in images_to_run if f'({id})' in name])>0]
@@ -126,7 +128,8 @@ def denoise_multiple_same_method(laplacian_filter,
                                    edge_filter, 
                                    preprocess_filter, 
                                    postprocess_filter,
-                                   range_correction)
+                                   range_correction,
+                                   diffusion_times)
         clean_images[img_name].append((exp_name, img))
     
     return clean_images
@@ -139,7 +142,8 @@ def denoise_single_image(img_name,
                          edge_filter, 
                          preprocess_filter = Filters.NONE, 
                          postprocess_filter = Filters.NONE,
-                         range_correction = Range.HIST_MATCH):
+                         range_correction = Range.HIST_MATCH,
+                         diffusion_times = 1):
     
     img = cv2.imread(join(images_path, img_name),0).astype(np.float32) / 255.0
     noisy_img = np.expand_dims(img, 2)
@@ -151,8 +155,9 @@ def denoise_single_image(img_name,
                               preprocess_filter=preprocess_filter,
                               postprocess_filter = postprocess_filter,
                               range_correction = range_correction,
-                              log=False)
-    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter,range_correction)
+                              log=False, 
+                              diffusion_times = diffusion_times)
+    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times)
 
     exp_path = f'{results_path}\\{exp_name}'
     if not os.path.exists(exp_path):
@@ -163,8 +168,8 @@ def denoise_single_image(img_name,
     save_image_results(img, clean_image,  f'{current_exp_path}\\{img_name}')
     return clean_image
 
-def get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction):
-    exp_name = f'{edge_filter.name}_{number_layers}_pre_{preprocess_filter.name}_post_{postprocess_filter.name}_range_{range_correction.name}'
+def get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times):
+    exp_name = f'{edge_filter.name}_{number_layers}_pre_{preprocess_filter.name}_post_{postprocess_filter.name}_range_{range_correction.name}_iter_{diffusion_times}'
     return exp_name
 
 
@@ -202,5 +207,6 @@ if __name__ == "__main__":
     postprocess_filter = Filters.NLM
 
 
-    run_many_experiments(laplacian, [19,38])
-    # calc_metrics(laplacian) 
+    #run_many_experiments(laplacian, [19,35])
+    run_many_experiments(laplacian, [17])
+    #calc_metrics(laplacian) 
