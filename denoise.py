@@ -168,15 +168,30 @@ def linear_then_bright(image, f1=0.2, f2=0.8, g2=0.95 ):
 
 
 def filter_image(image, filter_type):
-    if filter_type == Filters.NLM:
-        s = image.squeeze()
-        filtered_image = restoration.denoise_nl_means(s, h=0.01, patch_size=5, fast_mode=True)
-        filtered_image = np.expand_dims(filtered_image, 2)
-    elif filter_type == Filters.BILATERAL:
-        image = image.astype("float32")
-        image = cv2.bilateralFilter(image, 5, 2, 2)
-    elif filter_type == Filters.KUAN:
-        image =  restoration.denoise_tv_chambolle(image, weight=0.05)
+
+    try:
+        if(len(filter_type)):
+            pass               
+    except:
+        filter_type=[filter_type]
+
+    for filter in filter_type:
+        if filter == Filters.NLM:
+            s = image.squeeze()
+            filtered_image = restoration.denoise_nl_means(s, h=0.01, patch_size=5, fast_mode=True)
+            filtered_image = np.expand_dims(filtered_image, 2)
+        elif filter == Filters.BILATERAL:
+            image = image.astype("float32")
+            image = cv2.bilateralFilter(image, 5, 2, 2)
+        elif filter == Filters.KUAN:
+            image =  restoration.denoise_tv_chambolle(image, weight=0.03)
+        elif filter == Filters.SHARPPEN:
+            # blurred = cv2.GaussianBlur(image,(5,5),0)
+            # image=cv2.addWeighted(image,1.5,blurred,-0.5,0)
+            kernel = np.array([[-1, -1, -1],
+                   [-1, 10,-1],
+                   [-1, -1, -1]])
+            image = cv2.filter2D(src=image, ddepth=-1, kernel=kernel) 
 
 
     return image
@@ -192,27 +207,27 @@ def correct_range(image, original_image, range_correction):
     if range_correction==Range.HIST_MATCH:
         return skimage.exposure.match_histograms(normalized_img, original_image)
 
-    if range_correction==Range.NORMALIZE:
+    elif range_correction==Range.NORMALIZE:
         return normalized_img
     
-    if range_correction==Range.CONTRAST_STRETCH:
+    elif range_correction==Range.CONTRAST_STRETCH:
         #contrast_strech_transform(img_float)
-        contrast_strech_transform(normalized_img,f1=0.15, g1=0.1, f2=0.85 ,g2=0.95)
+        contrast_strech_transform(normalized_img, f1=0.1, g1=0.05, f2=0.85 ,g2=0.95)
         #contrast_strech_transform(img_float,f1=0.2,f2=0.9,alpha=0.5,beta=1.15,gamma=0.95,g1=0.1,g2=0.905)
         #contrast_strech_transform(img_float,f1=0.15,f2=0.9,alpha=0.3333,beta=1.1,gamma=1.25,g1=0.05,g2=0.875)
         return normalized_img
     
-    if range_correction==Range.DARK_GAMMA:
+    elif range_correction==Range.DARK_GAMMA:
         gamma=1.5
         normalized_img=np.power(normalized_img,gamma)
         return normalized_img
     
-    if range_correction==Range.BRIGHT_GAMMA:
+    elif range_correction==Range.BRIGHT_GAMMA:
         gamma=0.7
         normalized_img=np.power(normalized_img,gamma)
         return normalized_img
     
-    if range_correction==Range.AHE:
+    elif range_correction==Range.AHE:
         clahe = cv2.createCLAHE(clipLimit=40, tileGridSize=(16,16))
         #clahe = cv2.createCLAHE(clipLimit=40)
         #normalized_img=normalized_img.astype(cv2.CV_16UC1)
@@ -220,11 +235,11 @@ def correct_range(image, original_image, range_correction):
         cl1 = clahe.apply(normalized_img)
         return cl1
     
-    if range_correction==Range.LINEAR_BRIGHT:
+    elif range_correction==Range.LINEAR_BRIGHT:
         linear_then_bright(normalized_img)
         return normalized_img
     
-    if range_correction==Range.LOW_BRIGHNTNESS:
+    elif range_correction==Range.LOW_BRIGHNTNESS:
         normalized_img=0.8*normalized_img
         return normalized_img
 

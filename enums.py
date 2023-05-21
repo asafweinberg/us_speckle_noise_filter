@@ -17,6 +17,7 @@ class Filters(Enum):
     NLM = auto()
     BILATERAL = auto(),
     KUAN = auto()
+    SHARPPEN = auto()
 
 class Range(Enum):
     HIST_MATCH = auto() 

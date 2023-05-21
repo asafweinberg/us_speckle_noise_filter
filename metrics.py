@@ -175,6 +175,7 @@ def run_metrics(laplacian_filter,
                 preprocess_filter = Filters.NONE, 
                 postprocess_filter = Filters.NONE,
                 range_correction = Range.HIST_MATCH,
+                diffusion_times = 1,
                 run_on_us_images=True,
                 log_results=True):
     images_path = us_images_path if run_on_us_images else general_images_path
@@ -197,6 +198,7 @@ def run_metrics(laplacian_filter,
                                      preprocess_filter, 
                                      postprocess_filter,
                                      range_correction, 
+                                     diffusion_times,
                                      img_name)
         results_list.append(results)
 
@@ -221,7 +223,8 @@ def run_metrics_on_img(img,
                        edge_filter, 
                        preprocess_filter = Filters.NONE, 
                        postprocess_filter = Filters.NONE,
-                       range_correction = Range.HIST_MATCH, 
+                       range_correction = Range.HIST_MATCH,
+                       diffusion_times = 1, 
                        img_name=None):
     noisy_img = add_speckle_noise(img)
     # plt.imsave(f'.\\metrics\\images\\noisy_{img_name}', noisy_img, cmap='gray')
@@ -232,6 +235,7 @@ def run_metrics_on_img(img,
                               preprocess_filter=preprocess_filter,
                               postprocess_filter = postprocess_filter,
                               range_correction = range_correction,
+                              diffusion_times = diffusion_times,
                               log=False)
     # plt.imsave(f'.\\metrics\\images\\clean_{img_name}', clean_image, cmap='gray')
     save_image_results(noisy_img, clean_image, f'{results_path}\\final_pair_{img_name}')
