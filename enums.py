@@ -36,7 +36,6 @@ class Methods(Enum):
     BILATERAL= auto()
     NLM= auto(),
     KUAN= auto(),
-    LEE= auto(),
     SRAD= auto(),
     OURS=auto()
 

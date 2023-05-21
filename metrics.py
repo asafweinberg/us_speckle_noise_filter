@@ -25,30 +25,45 @@ results_path="./metrics/output"
 now = datetime.datetime.now()
 time = now.strftime("%m_%d_%H_%M_%S")
 
+
+
+preprocesses = [Filters.BILATERAL, Filters.BILATERAL,Filters.KUAN, Filters.KUAN]
+postprocesses = [Filters.NONE, Filters.KUAN,Filters.NONE, Filters.NONE]
+range_cors = [Range.NORMALIZE, Range.NORMALIZE,Range.NORMALIZE, Range.CONTRAST_STRETCH]
+diff_iterations = [1,1,2,2]
+
+
 def run_other_methods():
     rows = []
     all_keys = None
     for method in Methods:
         print(f'running method {method}')
-        average_results = run_by_method(method, False)
-        if all_keys == None:
-            all_keys = average_results.keys()
-            header = ['method', 'dataset'] + list(sorted(all_keys))
-            rows = [header]
-        row_gen = [method, 'general'] + [format(average_results.get(key, ''), '.5f') for key in sorted(all_keys)]
-        
-        # average_results = run_by_method(method, True)
-        # row_us = [method, 'US'] + [format(average_results.get(key, ''), '.5f') for key in sorted(all_keys)]
-        rows += [row_gen]
-        # rows += [row_us]
+        if method == Methods.OURS:
+            rows_ges=[]
+            for i in range(len(preprocesses)):
+                average_results = run_by_method(method, False,i)
+                exp_name = f'{preprocesses[i].name}_{postprocesses[i].name}_{range_cors[i].name}_{diff_iterations[i]}'
+                all_keys = average_results.keys()
+
+                rows_gen += [[exp_name, 'general'] + [format(average_results.get(key, ''), '.5f') for key in sorted(all_keys)]]
+        else:
+            average_results = run_by_method(method, False)
+            exp_name = method.name
+            if all_keys == None:
+                all_keys = average_results.keys()
+                header = ['method', 'dataset'] + list(sorted(all_keys))
+                rows = [header]
+            rows_gen = [[exp_name, 'general'] + [format(average_results.get(key, ''), '.5f') for key in sorted(all_keys)]]
+
+        rows += rows_gen
     
-    with open(os.path.join(results_path, f'metric_results_other_methods.csv'), 'w', newline='') as csvfile:
+    with open(os.path.join(results_path, f'metric_results_other_methods_{time}.csv'), 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerows(rows)
 
 
 
-def run_by_method(method, run_on_us_images):
+def run_by_method(method, run_on_us_images, ours_index=None):
     images_path = us_images_path if run_on_us_images else general_images_path
     only_files = [f for f in listdir(images_path) if isfile(join(images_path, f))]
     images_names=[f for f in only_files if ".png" in f]
@@ -63,7 +78,7 @@ def run_by_method(method, run_on_us_images):
     for img_name in tqdm(images_names):
         image = cv2.imread(join(images_path, img_name),0).astype(np.float32) / 255.0
         noisy_img = add_speckle_noise(image).astype(np.float32)
-
+        exp_name = ''
         if method == Methods.MEDIAN:
             filtered = apply_filter(noisy_img, cv2.medianBlur, ksize=5)
         elif method == Methods.GAUSSIAN:
@@ -76,20 +91,24 @@ def run_by_method(method, run_on_us_images):
             filtered = apply_filter(noisy_img, restoration.denoise_tv_bregman, weight=0.1, max_num_iter=10, eps=0.1, isotropic=False)
         elif method == Methods.KUAN:
             filtered= apply_filter(noisy_img, restoration.denoise_tv_chambolle, weight=0.1)
-        elif method == Methods.OURS: 
-            noisy_img = np.expand_dims(noisy_img, 2)
-            filtered = denoise_img(noisy_img, 
-                                   laplacian_filter=laplacian, 
-                                   pyr_levels=4, 
-                                   pyr_method=PyrMethod.CV2, 
-                                   edge_filter=EdgeFilter.SCHARR, 
-                                   preprocess_filter= Filters.BILATERAL, 
-                                   postprocess_filter=Filters.NONE, 
-                                   range_correction=Range.CONTRAST_STRETCH, 
-                                   log=False)
+        elif method == Methods.OURS:
+            image = np.expand_dims(image, 2)
+            filtered = denoise_img(image, 
+                                    laplacian_filter=laplacian, 
+                                    pyr_levels=4, 
+                                    pyr_method=PyrMethod.CV2, 
+                                    edge_filter=EdgeFilter.SCHARR,
+                                    preprocess_filter=preprocesses[ours_index],
+                                    postprocess_filter=postprocesses[ours_index], 
+                                    range_correction=range_cors[ours_index],
+                                    diffusion_times= diff_iterations[ours_index],
+                                    log=False)
+            exp_name = f'{preprocesses[ours_index].name}_{postprocesses[ours_index].name}_{range_cors[ours_index].name}_{diff_iterations[ours_index]}'
+            image = image.squeeze()
+            # filtered = np.expand_dims(filtered, 2)
 
         if 'lena' in img_name:
-            save_metric_image_results(image, noisy_img, filtered, os.path.join(results_path, f'lena_{method.name}.png'))
+            save_metric_image_results(image, noisy_img, filtered, os.path.join(results_path, f'lena_{method.name}_{exp_name}.png'))
 
         results = compute_all_metrics(image,filtered)
         results_list.append(results)
@@ -104,10 +123,6 @@ def compare_visually():
     images_path = us_images_path
     only_files = [f for f in listdir(images_path) if isfile(join(images_path, f))]
     images_names=[f for f in only_files if ".png" in f]
-
-    our_edge_filter=EdgeFilter.SCHARR
-    our_preprocess_filter= Filters.KUAN
-    our_range_correction=Range.CONTRAST_STRETCH
 
 
     for img_name in tqdm(images_names):
@@ -126,25 +141,28 @@ def compare_visually():
                 filtered = apply_filter(image, restoration.denoise_tv_bregman, weight=0.1, max_num_iter=10, eps=0.1, isotropic=False)
             elif method == Methods.KUAN:
                 filtered= apply_filter(image, restoration.denoise_tv_chambolle, weight=0.1)
-            elif method == Methods.OURS: 
-                image = np.expand_dims(image, 2)
-                filtered = denoise_img(image, 
-                                        laplacian_filter=laplacian, 
-                                        pyr_levels=4, 
-                                        pyr_method=PyrMethod.CV2, 
-                                        edge_filter=our_edge_filter,
-                                        preprocess_filter=our_preprocess_filter,
-                                        postprocess_filter=Filters.NONE, 
-                                        range_correction=our_range_correction, 
-                                        log=False)
-                
+            elif method == Methods.OURS:
+                continue
             reslts.append((method.name, filtered))
         
-        save_multi_method(img_name, reslts, our_edge_filter, our_preprocess_filter, our_range_correction)
+        for i in range(len(preprocesses)):
+            image = np.expand_dims(image, 2)
+            filtered = denoise_img(image, 
+                                    laplacian_filter=laplacian, 
+                                    pyr_levels=4, 
+                                    pyr_method=PyrMethod.CV2, 
+                                    edge_filter=EdgeFilter.SCHARR,
+                                    preprocess_filter=preprocesses[i],
+                                    postprocess_filter=postprocesses[i], 
+                                    range_correction=range_cors[i],
+                                    diffusion_times= diff_iterations[i],
+                                    log=False)
+            current_results = reslts + [('ours', filtered)]
+            save_multi_method(img_name, current_results, preprocesses[i], postprocesses[i], range_cors[i],diff_iterations[i])
 
 
-def save_multi_method(image_name, images, edge_filter, preprocess_filter, range_correction):
-    exp_name = f'{edge_filter.name}_{preprocess_filter.name}_{range_correction.name}'
+def save_multi_method(image_name, images, pre, post, range, iter):
+    exp_name = f'{pre.name}_{post.name}_{range.name}_{iter}'
     fig, axs = plt.subplots(3, 3, figsize=(10,10))
 
     for i, ax in enumerate(axs.flat):
@@ -160,7 +178,7 @@ def save_multi_method(image_name, images, edge_filter, preprocess_filter, range_
     if not os.path.exists(dir):
         os.makedirs(dir)    
     plt.savefig(f'{dir}\\{image_name}')
-      
+    plt.close()
 
 
 
@@ -316,5 +334,5 @@ if __name__ == "__main__":
     # laplacian = np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
     # number_layers=4
     # run_metrics(laplacian,number_layers) 
-    # run_other_methods()
-    compare_visually()
+    run_other_methods()
+    # compare_visually()

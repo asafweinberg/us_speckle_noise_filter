@@ -40,7 +40,6 @@ def create_experiments_def(laplacian_filter, images_to_run):
         (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.BILATERAL, Filters.KUAN, Range.NORMALIZE, 1 ,images_to_run),
         (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 2, images_to_run),
         (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.CONTRAST_STRETCH, 2, images_to_run)
-
     ]
 
 def calc_metrics(laplacian_filter):
