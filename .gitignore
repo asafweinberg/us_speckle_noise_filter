@@ -136,3 +136,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+metrics/breastTumorDeepLabV3.tar.gz
+metrics/segmentation.asv
+metrics/breastTumorDeepLabV3/breast_seg_deepLabV3.mat
+metrics/breastTumorDeepLabV3/breastUltrasoundImg.png
+metrics/breastTumorDeepLabV3/busi_license.rights.txt
+metrics/breastTumorDeepLabV3/test/
