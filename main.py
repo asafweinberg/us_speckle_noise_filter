@@ -12,7 +12,8 @@ import datetime
 import csv
 
 
-images_path=".\\test_images\\images"
+# images_path=".\\test_images\\images"
+images_path=".\\test_images\\benign"
 results_path=".\\test_images\\output"
 metrics_path=".\\metrics\\output"
 now = datetime.datetime.now()
@@ -20,41 +21,41 @@ time = now.strftime("%m_%d_%H_%M_%S")
 
 def create_metrics_def(laplacian_filter, run_on_us_images):
     return [
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.BILATERAL, Filters.NONE, Range.NORMALIZE, 1, run_on_us_images),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.BILATERAL, Filters.NONE, Range.NORMALIZE, 2, run_on_us_images),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 1 ,run_on_us_images),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 2, run_on_us_images),
-
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.CONTRAST_STRETCH, 1, run_on_us_images),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.BILATERAL, Filters.NONE, Range.CONTRAST_STRETCH, 1, run_on_us_images),
-
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.CONTRAST_STRETCH, 2, run_on_us_images),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.BILATERAL, Filters.NONE, Range.CONTRAST_STRETCH, 2, run_on_us_images),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.BILATERAL, Filters.KUAN, Range.NORMALIZE, 1, run_on_us_images),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.BILATERAL, Filters.KUAN, Range.CONTRAST_STRETCH, 2, run_on_us_images)
+        [[laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, run_on_us_images], [1]],
+        [[laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 2, run_on_us_images], [1]],
+        [[laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 2, run_on_us_images], [0.5]],
+        [[laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, run_on_us_images], [0.5]],
+        [[laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, run_on_us_images], [0.5]],
+        [[laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 1, run_on_us_images], [0.5]],
     ]
 
 def create_experiments_def(laplacian_filter, images_to_run):
     return [
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.BILATERAL, Filters.NONE, Range.NORMALIZE, 1, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.BILATERAL, Filters.KUAN, Range.NORMALIZE, 1 ,images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 2, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.CONTRAST_STRETCH, 2, images_to_run)
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.75, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 1, 0.75, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 1, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 1, 0.5, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, 0.75, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 2, 0.75, images_to_run),
     ]
 
 def calc_metrics(laplacian_filter):
     experiments_def = create_metrics_def(laplacian_filter, False)
     average_metrics = []
-    for i in range(len(experiments_def)):
-        exp = experiments_def[i]
-        exp_name = get_experiment_name(exp[2],exp[1],exp[3],exp[4],exp[5],exp[6])
-        metrics_results = run_metrics(*exp)
-        average_metrics.append((exp_name, 'general', metrics_results))
+    # for i in range(len(experiments_def)):
+    #     exp = experiments_def[i][0]
+    #     extra = experiments_def[i][1]
+    #     exp_name = get_experiment_name(exp[2],exp[1],exp[3],exp[4],exp[5],exp[6], extra[0])
+    #     exp[0] *= extra[0]
+    #     metrics_results = run_metrics(*exp)
+    #     average_metrics.append((exp_name, 'general', metrics_results))
 
     experiments_def = create_metrics_def(laplacian_filter, True)
     for i in range(len(experiments_def)):
-        exp = experiments_def[i]
-        exp_name = get_experiment_name(exp[2],exp[1],exp[3],exp[4],exp[5],exp[6])
+        exp = experiments_def[i][0]
+        extra = experiments_def[i][1]
+        exp_name = get_experiment_name(exp[2],exp[1],exp[3],exp[4],exp[5],exp[6], extra[0])
+        exp[0] = np.multiply(exp[0], extra[0])
         metrics_results = run_metrics(*exp)
         average_metrics.append((exp_name, 'US', metrics_results))
 
@@ -98,10 +99,11 @@ def denoise_multiple_same_method(laplacian_filter,
                                  postprocess_filter = Filters.NONE,
                                  range_correction = Range.HIST_MATCH,
                                  diffusion_times = 1,
+                                 laplacian_scale = 1,
                                  images_to_run = None):
     only_files = [f for f in listdir(images_path) if isfile(join(images_path, f))]
     images_names = [f for f in only_files if ".png" in f]
-    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times)
+    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale)
 
     if images_to_run:
         images_names = [name for name in images_names if len([id for id in images_to_run if f'({id})' in name])>0]
@@ -118,7 +120,8 @@ def denoise_multiple_same_method(laplacian_filter,
                                    preprocess_filter, 
                                    postprocess_filter,
                                    range_correction,
-                                   diffusion_times)
+                                   diffusion_times,
+                                   laplacian_scale)
         clean_images[img_name].append((exp_name, img))
     
     return clean_images
@@ -132,12 +135,13 @@ def denoise_single_image(img_name,
                          preprocess_filter = Filters.NONE, 
                          postprocess_filter = Filters.NONE,
                          range_correction = Range.HIST_MATCH,
-                         diffusion_times = 1):
+                         diffusion_times = 1,
+                         laplacian_scale = 1):
     
     img = cv2.imread(join(images_path, img_name),0).astype(np.float32) / 255.0
     noisy_img = np.expand_dims(img, 2)
     clean_image = denoise_img(noisy_img, 
-                              laplacian_filter, 
+                              laplacian_filter * laplacian_scale, 
                               number_layers, 
                               PyrMethod.CV2, 
                               edge_filter=edge_filter,
@@ -146,7 +150,7 @@ def denoise_single_image(img_name,
                               range_correction = range_correction,
                               log=False, 
                               diffusion_times = diffusion_times)
-    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times)
+    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale)
 
     exp_path = f'{results_path}\\{exp_name}'
     if not os.path.exists(exp_path):
@@ -157,25 +161,29 @@ def denoise_single_image(img_name,
     save_image_results(img, clean_image,  f'{current_exp_path}\\{img_name}')
     return clean_image
 
-def get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times): 
+def get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale=1): 
     try:
         if(len(postprocess_filter)):
             postprocess_str='_'.join([p.name for p in postprocess_filter])
     except:
         postprocess_str=postprocess_filter.name
-    exp_name = f'{edge_filter.name}_{number_layers}_pre_{preprocess_filter.name}_post_{postprocess_str}_range_{range_correction.name}_iter_{diffusion_times}'
+    exp_name = f'scale_{laplacian_scale}_{preprocess_filter.name}_{postprocess_str}_{range_correction.name}_iter_{diffusion_times}'
     return exp_name
 
 
 def save_grid_images(image_name, images):
     img = cv2.imread(join(images_path, image_name),0).astype(np.float32) / 255.0
-    images = [('origin', img)] + images
+    images = [('Original', img)] + images
     fig, axs = plt.subplots(2, 3, figsize=(10,10))
-
     for i, ax in enumerate(axs.flat):
         if i < len(images):
             ax.imshow(images[i][1], cmap='gray')
-            ax.set_title(images[i][0], fontsize=7)
+            if i ==1:
+                ax.set_title('No Preprocessing', fontsize=14)
+            if i ==2:
+                ax.set_title('Full Method', fontsize=14)
+            if i==0:
+                ax.set_title(images[i][0], fontsize=14)
             ax.set_xticks([])
             ax.set_yticks([])
             ax.label_outer()
@@ -184,6 +192,7 @@ def save_grid_images(image_name, images):
     
     plt.tight_layout()
     plt.savefig(f'{results_path}\\experiments_{time}_{image_name}')
+    plt.close()
 
 
 def save_image_results(origin, denoised, file_name):
@@ -203,9 +212,9 @@ if __name__ == "__main__":
     postprocess_filter = Filters.NLM
 
 
-    #run_many_experiments(laplacian, [35])
+    run_many_experiments(laplacian)
     
     #for pic in [17,54,26,93,44,35,46]:
-    for pic in [35,44,93,17,54,94]:
-        run_many_experiments(laplacian, [pic])
-    #calc_metrics(laplacian) 
+    # for pic in [17,54,93]:
+    #     run_many_experiments(laplacian, [pic])
+    # calc_metrics(laplacian) 

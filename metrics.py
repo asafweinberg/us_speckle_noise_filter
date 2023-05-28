@@ -14,12 +14,14 @@ from os import listdir
 from os.path import isfile, join
 from tqdm import tqdm
 import datetime
+from scipy.special import kl_div
 
 laplacian = np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
 mean = 0
 noise_variance = 0.04
 general_images_path="./metrics/images/general_images"
 us_images_path="./metrics/images/US_images"
+us_images_path=".\\test_images\\benign"
 results_path="./metrics/output"
 
 now = datetime.datetime.now()
@@ -27,33 +29,34 @@ time = now.strftime("%m_%d_%H_%M_%S")
 
 
 
-preprocesses = [Filters.BILATERAL, Filters.BILATERAL,Filters.KUAN, Filters.KUAN]
-postprocesses = [Filters.NONE, Filters.KUAN,Filters.NONE, Filters.NONE]
-range_cors = [Range.NORMALIZE, Range.NORMALIZE,Range.NORMALIZE, Range.CONTRAST_STRETCH]
-diff_iterations = [1,1,2,2]
+preprocesses = [Filters.NONE,Filters.KUAN, Filters.NONE,Filters.KUAN]
+postprocesses = [Filters.NONE]*4
+range_cors = [Range.NORMALIZE]*4
+diff_iterations = [2]*4
+laplacian_scales = [0.5,0.5,0.75,0.75]
 
 
-def run_other_methods():
+def run_other_methods(run_on_us=False):
     rows = []
     all_keys = None
     for method in Methods:
         print(f'running method {method}')
         if method == Methods.OURS:
-            rows_ges=[]
+            rows_gen=[]
             for i in range(len(preprocesses)):
-                average_results = run_by_method(method, False,i)
-                exp_name = f'{preprocesses[i].name}_{postprocesses[i].name}_{range_cors[i].name}_{diff_iterations[i]}'
+                average_results = run_by_method(method, run_on_us,i, laplacian_scale=laplacian_scales[i])
+                exp_name = f'{laplacian_scales[i]}_{preprocesses[i].name}_{range_cors[i].name}_{diff_iterations[i]}'
                 all_keys = average_results.keys()
 
-                rows_gen += [[exp_name, 'general'] + [format(average_results.get(key, ''), '.5f') for key in sorted(all_keys)]]
+                rows_gen += [[exp_name, 'us'] + [format(average_results.get(key, ''), '.5f') for key in sorted(all_keys)]]
         else:
-            average_results = run_by_method(method, False)
+            average_results = run_by_method(method, run_on_us)
             exp_name = method.name
             if all_keys == None:
                 all_keys = average_results.keys()
                 header = ['method', 'dataset'] + list(sorted(all_keys))
                 rows = [header]
-            rows_gen = [[exp_name, 'general'] + [format(average_results.get(key, ''), '.5f') for key in sorted(all_keys)]]
+            rows_gen = [[exp_name, 'us'] + [format(average_results.get(key, ''), '.5f') for key in sorted(all_keys)]]
 
         rows += rows_gen
     
@@ -62,21 +65,20 @@ def run_other_methods():
         writer.writerows(rows)
 
 
-
-def run_by_method(method, run_on_us_images, ours_index=None):
+ 
+def run_by_method(method, run_on_us_images, ours_index=None, laplacian_scale=1):
     images_path = us_images_path if run_on_us_images else general_images_path
     only_files = [f for f in listdir(images_path) if isfile(join(images_path, f))]
     images_names=[f for f in only_files if ".png" in f]
 
-    average_results={
-            'mse': 0,
-            'signal2noise': 0,
-            'psnr': 0,
-            'ssim':0
-            }
+    average_results = init_avg_results()
     results_list=[]    
     for img_name in tqdm(images_names):
         image = cv2.imread(join(images_path, img_name),0).astype(np.float32) / 255.0
+        # if run_on_us_images:
+        #     noisy_img = image
+        # else:
+        #     noisy_img = add_speckle_noise(image).astype(np.float32)
         noisy_img = add_speckle_noise(image).astype(np.float32)
         exp_name = ''
         if method == Methods.MEDIAN:
@@ -92,9 +94,9 @@ def run_by_method(method, run_on_us_images, ours_index=None):
         elif method == Methods.KUAN:
             filtered= apply_filter(noisy_img, restoration.denoise_tv_chambolle, weight=0.1)
         elif method == Methods.OURS:
-            image = np.expand_dims(image, 2)
-            filtered = denoise_img(image, 
-                                    laplacian_filter=laplacian, 
+            noisy_img = np.expand_dims(noisy_img, 2)
+            filtered = denoise_img(noisy_img, 
+                                    laplacian_filter=laplacian * laplacian_scale, 
                                     pyr_levels=4, 
                                     pyr_method=PyrMethod.CV2, 
                                     edge_filter=EdgeFilter.SCHARR,
@@ -107,8 +109,7 @@ def run_by_method(method, run_on_us_images, ours_index=None):
             image = image.squeeze()
             # filtered = np.expand_dims(filtered, 2)
 
-        if 'lena' in img_name:
-            save_metric_image_results(image, noisy_img, filtered, os.path.join(results_path, f'lena_{method.name}_{exp_name}.png'))
+        save_metric_image_results(image, noisy_img, filtered, os.path.join(results_path, f'{img_name}{method.name}_{exp_name}.png'))
 
         results = compute_all_metrics(image,filtered)
         results_list.append(results)
@@ -134,21 +135,21 @@ def compare_visually():
             elif method == Methods.GAUSSIAN:
                 filtered = apply_filter(image, cv2.GaussianBlur, ksize=(5, 5), sigmaX=0)
             elif method == Methods.NLM:
-                filtered = apply_filter(image, restoration.denoise_nl_means, h=0.01, patch_size=5, fast_mode=True)
+                filtered = apply_filter(image, restoration.denoise_nl_means, h=0.05, patch_size=7, fast_mode=True)
             elif method == Methods.BILATERAL:
                 filtered= apply_filter(image, cv2.bilateralFilter, 5, 2, 2)
             elif method == Methods.SRAD:
                 filtered = apply_filter(image, restoration.denoise_tv_bregman, weight=0.1, max_num_iter=10, eps=0.1, isotropic=False)
             elif method == Methods.KUAN:
-                filtered= apply_filter(image, restoration.denoise_tv_chambolle, weight=0.1)
+                filtered= apply_filter(image, restoration.denoise_tv_chambolle, weight=0.03)
             elif method == Methods.OURS:
                 continue
             reslts.append((method.name, filtered))
         
+        input_image = np.expand_dims(image, 2)
         for i in range(len(preprocesses)):
-            image = np.expand_dims(image, 2)
-            filtered = denoise_img(image, 
-                                    laplacian_filter=laplacian, 
+            filtered = denoise_img(input_image, 
+                                    laplacian_filter=laplacian_scales[i]*laplacian, 
                                     pyr_levels=4, 
                                     pyr_method=PyrMethod.CV2, 
                                     edge_filter=EdgeFilter.SCHARR,
@@ -157,12 +158,12 @@ def compare_visually():
                                     range_correction=range_cors[i],
                                     diffusion_times= diff_iterations[i],
                                     log=False)
-            current_results = reslts + [('ours', filtered)]
-            save_multi_method(img_name, current_results, preprocesses[i], postprocesses[i], range_cors[i],diff_iterations[i])
+            current_results = reslts + [('Ours', filtered)]
+            save_multi_method(img_name, current_results, preprocesses[i], postprocesses[i], range_cors[i],diff_iterations[i], laplacian_scales[i])
 
 
-def save_multi_method(image_name, images, pre, post, range, iter):
-    exp_name = f'{pre.name}_{post.name}_{range.name}_{iter}'
+def save_multi_method(image_name, images, pre, post, range, iter, scale):
+    exp_name = f'{scale}_{pre.name}_{post.name}_{range.name}_{iter}'
     fig, axs = plt.subplots(3, 3, figsize=(10,10))
 
     for i, ax in enumerate(axs.flat):
@@ -199,12 +200,7 @@ def run_metrics(laplacian_filter,
     images_path = us_images_path if run_on_us_images else general_images_path
     only_files = [f for f in listdir(images_path) if isfile(join(images_path, f))]
     images_names=[f for f in only_files if ".png" in f]
-    average_results={
-        'mse': 0,
-        'signal2noise': 0,
-        'psnr': 0,
-        'ssim':0
-        }
+    average_results=init_avg_results()
     results_list=[]
 
     for img_name in tqdm(images_names):
@@ -217,7 +213,8 @@ def run_metrics(laplacian_filter,
                                      postprocess_filter,
                                      range_correction, 
                                      diffusion_times,
-                                     img_name)
+                                     img_name,
+                                     run_on_us_images)
         results_list.append(results)
 
     for metrica in average_results.keys():
@@ -243,8 +240,12 @@ def run_metrics_on_img(img,
                        postprocess_filter = Filters.NONE,
                        range_correction = Range.HIST_MATCH,
                        diffusion_times = 1, 
-                       img_name=None):
-    noisy_img = add_speckle_noise(img)
+                       img_name=None,
+                       run_on_us_images=True):
+    if run_on_us_images:
+        noisy_img = img
+    else:
+        noisy_img = add_speckle_noise(img)
     # plt.imsave(f'.\\metrics\\images\\noisy_{img_name}', noisy_img, cmap='gray')
     noisy_img = np.expand_dims(noisy_img, 2)
 
@@ -256,21 +257,41 @@ def run_metrics_on_img(img,
                               diffusion_times = diffusion_times,
                               log=False)
     # plt.imsave(f'.\\metrics\\images\\clean_{img_name}', clean_image, cmap='gray')
-    save_image_results(noisy_img, clean_image, f'{results_path}\\final_pair_{img_name}')
+    # save_image_results(noisy_img, clean_image, f'{results_path}\\final_pair_{img_name}')
                        
     return compute_all_metrics(img,clean_image)
+
+
+def calculate_iqi(original_image, denoised_image):
+
+    covariance_matrix = np.cov(original_image.flatten(), denoised_image.flatten())
+    covariance_value = covariance_matrix[0, 1]  # or covariance_matrix[1, 0]
+    variance_img1 = np.var(original_image)
+    variance_img2 = np.var(denoised_image)
+    mean1 = np.mean(original_image)
+    mean2 = np.mean(denoised_image)
+
+    covariance_ratio = covariance_value / (variance_img1 * variance_img2)
+    means_ratio = (2*mean1*mean2)/ (mean1**2 + mean2**2)
+    variance_ratio = (2*variance_img1*variance_img2)/ (variance_img1**2 + variance_img2**2)
+
+    return covariance_ratio*means_ratio*variance_ratio
 
 
 def add_speckle_noise(img):
     return random_noise(img, mode='speckle',var=noise_variance)
 
 
-def compute_all_metrics(img,clean_image):
+def compute_all_metrics(origin_img,result_img):
     return {
-        'mse': meansquareerror(img,clean_image),
-        'signal2noise': signaltonoise(clean_image),
-        'psnr': psnr(img,clean_image),
-        'ssim': ssim(img,clean_image,data_range=clean_image.max() - clean_image.min())
+        'mse': meansquareerror(origin_img,result_img),
+        'signal2noise': signaltonoise(result_img,origin_img),
+        'psnr': psnr(origin_img,result_img),
+        'ssim': ssim(origin_img,result_img,data_range=result_img.max() - result_img.min()),
+        'sdr': calculate_sdr(result_img, origin_img),
+        'cv': calculate_cv(result_img),
+        'cnr': calculate_contrast_to_noise_ratio(result_img, origin_img),
+        'iqi': calculate_iqi(origin_img, result_img)
     }
 
 
@@ -281,11 +302,12 @@ def meansquareerror(src, dst):
     mse = np.mean((src - dst) ** 2)
     return mse
 
-def signaltonoise(src):
-    a = np.asanyarray(src)
+def signaltonoise(denoised_image, original_image):
+    a = np.asanyarray(denoised_image)
     m = np.mean(a)
     sd = np.std(a)
     return abs(10 * math.log10(math.pow(m,2) / math.pow(sd,2)))
+
 
 def psnr(src, dst):
     if src.ndim == 3:
@@ -297,12 +319,37 @@ def psnr(src, dst):
     PIXEL_MAX =255.0
     return 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
 
-# def calc_ssim(src, dst):
-#     return ssim(src, dst)
+def calculate_sdr(denoised_image, original_image):
+    residuals = denoised_image - original_image
+    sdr = np.std(residuals)
+    return sdr
 
+
+def calculate_cv(image):
+    return np.std(image) / np.mean(image)
+
+def calculate_contrast_to_noise_ratio(image, origin):
+    noise = origin - image
+    mean_contrast = np.mean(image)
+    mean_noise = np.mean(noise)
+    std_noise = np.std(noise)
+    cnr = (mean_contrast - mean_noise) / std_noise
+    return cnr
+
+def init_avg_results():
+    return {
+        'mse': 0,
+        'signal2noise': 0,
+        'psnr': 0,
+        'ssim':0,
+        'sdr':0,
+        'cv': 0,
+        'cnr': 0,
+        'iqi':0
+        }
 
 def print_results(metrics, avg=False, log_results=True):
-    results_str = f'MSE: {metrics["mse"]},    signal2noise: {metrics["signal2noise"]},    PSNR: {metrics["psnr"]},     SSIM: {metrics["ssim"]}'
+    results_str = f'MSE: {metrics["mse"]},    signal2noise: {metrics["signal2noise"]},    PSNR: {metrics["psnr"]},     SSIM: {metrics["ssim"]},   SDR: {metrics["sdr"]}'
     if log_results:
         if avg: print('Average:')
         print(results_str)
@@ -317,6 +364,7 @@ def save_image_results(origin, denoised, file_name):
     axarr[1].imshow(denoised, cmap='gray')
     axarr[1].axis('off')
     plt.savefig(file_name, bbox_inches='tight')
+    plt.close()
 
 
 def save_metric_image_results(origin, noisy, denoised, file_name):
@@ -328,11 +376,12 @@ def save_metric_image_results(origin, noisy, denoised, file_name):
     axarr[2].imshow(denoised, cmap='gray')
     axarr[2].axis('off')
     plt.savefig(file_name, bbox_inches='tight')
+    plt.close()
 
 
 if __name__ == "__main__":
     # laplacian = np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
     # number_layers=4
     # run_metrics(laplacian,number_layers) 
-    run_other_methods()
+    run_other_methods(True)
     # compare_visually()

@@ -14,7 +14,8 @@ from poisson_solver import poisson_solver_py
 
 eng = matlab.engine.start_matlab()
 
-
+trig_alpha = -0.5
+trig_beta = 0.4
 
 
 #input image in grey scale and type float_32
@@ -31,7 +32,7 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,pre
         image = filter_image(original_image, preprocess_filter)
         image = np.expand_dims(image, 2)
 
-    for time in range(diffusion_times):    
+    for k in range(diffusion_times):    
         if log: print('creating gaussian pyramid')
 
         BlurredPyramid, padR, padC = create_pyramid(image, pyr_levels, pyr_method)
@@ -45,11 +46,13 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,pre
         for i in range(pyr_levels-2,-1,-1):
             Gn = np.abs(ndimage.convolve(np.abs(BlurredPyramid[i]), laplacian_filter, mode='nearest'))
             W_expanded = pyramid_up(W,pyr_method)
+            # W = W_expanded + Gn
+            # W = np.minimum(W_expanded, Gn)
             W = np.maximum(W_expanded, Gn)
 
             # TODO: remove the 0 padding, hurts this condition
-            if (W.max() > 0):
-                W = W / W.max()
+        if (W.max() > 0):
+            W = W / W.max()
         
         # if log: save_results(scaled_img, W, 'W')
 
@@ -59,8 +62,8 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,pre
 
         if log: print('starting poisson solver')
 
-        Wx = (0.5 * (W) + 1.0) * Gx
-        Wy = (0.5 * (W) + 1.0) * Gy
+        Wx = (trig_beta * (W) + trig_alpha) * Gx
+        Wy = (trig_beta * (W) + trig_alpha) * Gy
         # if log: save_results(scaled_img, Wx, 'Wx_canny')
         # if log: save_results(scaled_img, Wy, 'Wy2_canny')
 
@@ -212,7 +215,7 @@ def correct_range(image, original_image, range_correction):
     
     elif range_correction==Range.CONTRAST_STRETCH:
         #contrast_strech_transform(img_float)
-        contrast_strech_transform(normalized_img, f1=0.1, g1=0.05, f2=0.85 ,g2=0.95)
+        contrast_strech_transform(normalized_img, f1=0.15, g1=0.1, f2=0.85 ,g2=0.85)
         #contrast_strech_transform(img_float,f1=0.2,f2=0.9,alpha=0.5,beta=1.15,gamma=0.95,g1=0.1,g2=0.905)
         #contrast_strech_transform(img_float,f1=0.15,f2=0.9,alpha=0.3333,beta=1.1,gamma=1.25,g1=0.05,g2=0.875)
         return normalized_img
