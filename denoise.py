@@ -14,12 +14,13 @@ from poisson_solver import poisson_solver_py
 
 eng = matlab.engine.start_matlab()
 
-trig_alpha = -0.5
-trig_beta = 0.4
-
+# trig_alpha = -0.5
+# trig_beta = 0.4
+trig_alpha = 1
+trig_beta = 0.5
 
 #input image in grey scale and type float_32
-def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,preprocess_filter = Filters.NONE, postprocess_filter = Filters.NONE, file_name=None, log=False, range_correction=Range.HIST_MATCH, diffusion_times=1):
+def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,preprocess_filter = Filters.NONE, postprocess_filter = Filters.NONE, file_name=None, log=False, range_correction=Range.HIST_MATCH, diffusion_times=1, is_lf = False):
     if max(image.shape)>1024: 
         scale_factor = 0.5
         scaled_shape_int=(int(image.shape[1] * scale_factor), int(image.shape[0] * scale_factor))
@@ -30,6 +31,28 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,pre
 
     if preprocess_filter is not Filters.NONE:
         image = filter_image(original_image, preprocess_filter)
+        image = np.expand_dims(image, 2)
+
+    if is_lf:
+        image=image.squeeze()
+        #image = to_python(eng.LF_Sharp(to_matlab(image, expand_dims = False)),False)
+        image = to_python(eng.LF3(to_matlab(image, expand_dims = False)),False)
+
+        # plt.imshow(image,cmap="gray")
+        # plt.show()
+
+        image = image+original_image
+
+        # plt.imshow(image,cmap="gray")
+        # plt.show()
+
+        min_val=np.min(image)
+        max_val=np.max(image)
+        image=(image-min_val)/(max_val-min_val)
+
+        # plt.imshow(image,cmap="gray")
+        # plt.show()
+
         image = np.expand_dims(image, 2)
 
     for k in range(diffusion_times):    
@@ -269,5 +292,5 @@ if __name__ == "__main__":
 
    
     MATLAB_img =denoise_img(img, laplacian, pyr_levels=N, pyr_method=PyrMethod.CV2, edge_filter=EdgeFilter.SOBEL_CV2,file_name=save_name,log=True,range_correction=Range.CONTRAST_STRETCH)
-
+        
 

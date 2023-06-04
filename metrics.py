@@ -20,8 +20,8 @@ laplacian = np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
 mean = 0
 noise_variance = 0.04
 general_images_path="./metrics/images/general_images"
-us_images_path="./metrics/images/US_images"
-us_images_path=".\\test_images\\benign"
+#us_images_path="./metrics/images/US_images"
+us_images_path=".\\test_images\\images\\no_black\\no_black_metrics"
 results_path="./metrics/output"
 
 now = datetime.datetime.now()
@@ -29,11 +29,11 @@ time = now.strftime("%m_%d_%H_%M_%S")
 
 
 
-preprocesses = [Filters.NONE,Filters.KUAN, Filters.NONE,Filters.KUAN]
-postprocesses = [Filters.NONE]*4
-range_cors = [Range.NORMALIZE]*4
-diff_iterations = [2]*4
-laplacian_scales = [0.5,0.5,0.75,0.75]
+preprocesses = [Filters.NONE,Filters.KUAN]
+postprocesses = [Filters.NONE]*2
+range_cors = [Range.NORMALIZE]*2
+diff_iterations = [2]*2
+laplacian_scales = [0.75,0.75]
 
 
 def run_other_methods(run_on_us=False):
@@ -383,5 +383,5 @@ if __name__ == "__main__":
     # laplacian = np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
     # number_layers=4
     # run_metrics(laplacian,number_layers) 
-    run_other_methods(True)
-    # compare_visually()
+    #run_other_methods(True)
+    compare_visually()

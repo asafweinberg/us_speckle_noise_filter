@@ -12,8 +12,8 @@ import datetime
 import csv
 
 
-# images_path=".\\test_images\\images"
-images_path=".\\test_images\\benign"
+#images_path=".\\test_images\\images"
+images_path=".\\test_images\\images\\no_black"
 results_path=".\\test_images\\output"
 metrics_path=".\\metrics\\output"
 now = datetime.datetime.now()
@@ -35,8 +35,10 @@ def create_experiments_def(laplacian_filter, images_to_run):
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 1, 0.75, images_to_run),
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 1, images_to_run),
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 1, 0.5, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, 0.75, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 2, 0.75, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, 0.5, True ,images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, 1, True ,images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 1, True ,images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, 0.75, True ,images_to_run),
     ]
 
 def calc_metrics(laplacian_filter):
@@ -100,10 +102,11 @@ def denoise_multiple_same_method(laplacian_filter,
                                  range_correction = Range.HIST_MATCH,
                                  diffusion_times = 1,
                                  laplacian_scale = 1,
+                                 is_lf = True,
                                  images_to_run = None):
     only_files = [f for f in listdir(images_path) if isfile(join(images_path, f))]
     images_names = [f for f in only_files if ".png" in f]
-    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale)
+    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale, is_lf)
 
     if images_to_run:
         images_names = [name for name in images_names if len([id for id in images_to_run if f'({id})' in name])>0]
@@ -121,7 +124,8 @@ def denoise_multiple_same_method(laplacian_filter,
                                    postprocess_filter,
                                    range_correction,
                                    diffusion_times,
-                                   laplacian_scale)
+                                   laplacian_scale,
+                                   is_lf)
         clean_images[img_name].append((exp_name, img))
     
     return clean_images
@@ -136,7 +140,8 @@ def denoise_single_image(img_name,
                          postprocess_filter = Filters.NONE,
                          range_correction = Range.HIST_MATCH,
                          diffusion_times = 1,
-                         laplacian_scale = 1):
+                         laplacian_scale = 1,
+                         is_lf = True):
     
     img = cv2.imread(join(images_path, img_name),0).astype(np.float32) / 255.0
     noisy_img = np.expand_dims(img, 2)
@@ -149,8 +154,9 @@ def denoise_single_image(img_name,
                               postprocess_filter = postprocess_filter,
                               range_correction = range_correction,
                               log=False, 
-                              diffusion_times = diffusion_times)
-    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale)
+                              diffusion_times = diffusion_times,
+                              is_lf = is_lf)
+    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale, is_lf)
 
     exp_path = f'{results_path}\\{exp_name}'
     if not os.path.exists(exp_path):
@@ -161,29 +167,29 @@ def denoise_single_image(img_name,
     save_image_results(img, clean_image,  f'{current_exp_path}\\{img_name}')
     return clean_image
 
-def get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale=1): 
+def get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale=1, is_lf=True): 
     try:
         if(len(postprocess_filter)):
             postprocess_str='_'.join([p.name for p in postprocess_filter])
     except:
         postprocess_str=postprocess_filter.name
-    exp_name = f'scale_{laplacian_scale}_{preprocess_filter.name}_{postprocess_str}_{range_correction.name}_iter_{diffusion_times}'
+    exp_name = f'scale_{laplacian_scale}_{preprocess_filter.name}_{postprocess_str}_{range_correction.name}_iter_{diffusion_times}_isLF_{is_lf}'
     return exp_name
 
 
 def save_grid_images(image_name, images):
     img = cv2.imread(join(images_path, image_name),0).astype(np.float32) / 255.0
     images = [('Original', img)] + images
-    fig, axs = plt.subplots(2, 3, figsize=(10,10))
+    fig, axs = plt.subplots(3, 3, figsize=(10,10))
     for i, ax in enumerate(axs.flat):
         if i < len(images):
             ax.imshow(images[i][1], cmap='gray')
-            if i ==1:
-                ax.set_title('No Preprocessing', fontsize=14)
-            if i ==2:
-                ax.set_title('Full Method', fontsize=14)
-            if i==0:
-                ax.set_title(images[i][0], fontsize=14)
+            # if i ==1:
+            #     ax.set_title('Our Method - No PP', fontsize=14)
+            # if i ==2:
+            #     ax.set_title('Our Method', fontsize=14)
+            # if i==0:
+            ax.set_title(images[i][0], fontsize=8)
             ax.set_xticks([])
             ax.set_yticks([])
             ax.label_outer()
@@ -201,7 +207,8 @@ def save_image_results(origin, denoised, file_name):
     axarr[0].axis('off')
     axarr[1].imshow(denoised, cmap='gray')
     axarr[1].axis('off')
-    plt.savefig(file_name, bbox_inches='tight')
+    #plt.savefig(file_name, bbox_inches='tight')
+    plt.imsave(file_name,denoised, cmap="gray")
 
 
 if __name__ == "__main__":
@@ -212,9 +219,10 @@ if __name__ == "__main__":
     postprocess_filter = Filters.NLM
 
 
-    run_many_experiments(laplacian)
+    #run_many_experiments(laplacian)
+    run_many_experiments(laplacian,[135])
     
     #for pic in [17,54,26,93,44,35,46]:
     # for pic in [17,54,93]:
-    #     run_many_experiments(laplacian, [pic])
+    #    run_many_experiments(laplacian, [pic])
     # calc_metrics(laplacian) 
