@@ -16,32 +16,39 @@ eng = matlab.engine.start_matlab()
 
 # trig_alpha = -0.5
 # trig_beta = 0.4
-trig_alpha = 1
-trig_beta = 0.5
+#trig_alpha = 1
+#trig_beta = 0.5
 
 #input image in grey scale and type float_32
-def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,preprocess_filter = Filters.NONE, postprocess_filter = Filters.NONE, file_name=None, log=False, range_correction=Range.HIST_MATCH, diffusion_times=1, is_lf = False):
+def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,preprocess_filter, postprocess_filter, range_correction, log=False, file_name=None,   diffusion_times=1, is_lf = True, other_params={"alpha":1, "beta":0.5}):
+    if len(other_params)!=0:
+        trig_alpha = other_params["alpha"]
+        trig_beta = other_params["beta"]
+    else:
+        trig_alpha = 1
+        trig_beta = 0.5   
+             
+    image_sharp=image
+
     if max(image.shape)>1024: 
         scale_factor = 0.5
         scaled_shape_int=(int(image.shape[1] * scale_factor), int(image.shape[0] * scale_factor))
         image=cv2.resize(image, scaled_shape_int)
         image = np.expand_dims(image, 2)
+        image_sharp=image
 
     original_image=image.squeeze()
-
+    
     if preprocess_filter is not Filters.NONE:
         image = filter_image(original_image, preprocess_filter)
         image = np.expand_dims(image, 2)
+        image_sharp=image
 
     if is_lf:
         image=image.squeeze()
-        #image = to_python(eng.LF_Sharp(to_matlab(image, expand_dims = False)),False)
+        #smooth_image = cv2.GaussianBlur(image, (5, 5), 0)
+        image_sharp = to_python(eng.LF_Sharp(to_matlab(image, expand_dims = False)),False)
         image = to_python(eng.LF3(to_matlab(image, expand_dims = False)),False)
-
-        # plt.imshow(image,cmap="gray")
-        # plt.show()
-
-        image = image+original_image
 
         # plt.imshow(image,cmap="gray")
         # plt.show()
@@ -50,15 +57,17 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,pre
         max_val=np.max(image)
         image=(image-min_val)/(max_val-min_val)
 
-        # plt.imshow(image,cmap="gray")
-        # plt.show()
-
+        image = 0.5*image+0.5*original_image
         image = np.expand_dims(image, 2)
+        image_sharp = np.expand_dims(image_sharp, 2)
 
     for k in range(diffusion_times):    
         if log: print('creating gaussian pyramid')
+        
+        BlurredPyramid_LF, padR, padC = create_pyramid(image, pyr_levels, pyr_method)
+        BlurredPyramid_original, r, c = create_pyramid(np.expand_dims(original_image, 2), pyr_levels, pyr_method)
+        BlurredPyramid, r, c = create_pyramid(image_sharp, pyr_levels, pyr_method)
 
-        BlurredPyramid, padR, padC = create_pyramid(image, pyr_levels, pyr_method)
         W= np.abs(ndimage.convolve(np.abs(BlurredPyramid[pyr_levels-1]), laplacian_filter, mode='nearest'))
 
         if (W.max() > 0):
@@ -78,10 +87,15 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,pre
             W = W / W.max()
         
         # if log: save_results(scaled_img, W, 'W')
+        # plt.imshow(W,cmap="gray")
+        # plt.show()
 
         if log: print('edge detection')
 
-        Gx, Gy = detect_edges(BlurredPyramid[0], edge_filter) #TODO: contrast stertching\ threshold
+        # BlurredPyramid_original, padR_original, padC_original = create_pyramid(np.expand_dims(original_image, 2), pyr_levels, pyr_method)
+
+        Gx, Gy = detect_edges(BlurredPyramid_LF[0], edge_filter) #TODO: contrast stertching\ threshold
+        # Gx, Gy = detect_edges(BlurredPyramid_original[0], edge_filter) #TODO: contrast stertching\ threshold
 
         if log: print('starting poisson solver')
 
@@ -89,9 +103,17 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,pre
         Wy = (trig_beta * (W) + trig_alpha) * Gy
         # if log: save_results(scaled_img, Wx, 'Wx_canny')
         # if log: save_results(scaled_img, Wy, 'Wy2_canny')
+        # plt.imshow(Gx,cmap="gray")
+        # plt.show()
+        # plt.imshow(Gy,cmap="gray")
+        # plt.show()
+        # plt.imshow(Wx,cmap="gray")
+        # plt.show()
+        # plt.imshow(Wy,cmap="gray")
+        # plt.show()
 
-
-        diffused_img_sobel = poisson_solver_py(Wx, Wy, BlurredPyramid[0])
+        diffused_img_sobel = poisson_solver_py(Wx, Wy, BlurredPyramid_original[0])
+        # diffused_img_sobel = poisson_solver_py(Wx, Wy, BlurredPyramid_original[0])
         cropped = diffused_img_sobel[:-padR, :-padC]
 
         min_val=np.min(cropped)
@@ -238,13 +260,14 @@ def correct_range(image, original_image, range_correction):
     
     elif range_correction==Range.CONTRAST_STRETCH:
         #contrast_strech_transform(img_float)
-        contrast_strech_transform(normalized_img, f1=0.15, g1=0.1, f2=0.85 ,g2=0.85)
+        contrast_strech_transform(normalized_img, f1=0.3, g1=0.05, f2=0.8 ,g2=0.95)
         #contrast_strech_transform(img_float,f1=0.2,f2=0.9,alpha=0.5,beta=1.15,gamma=0.95,g1=0.1,g2=0.905)
         #contrast_strech_transform(img_float,f1=0.15,f2=0.9,alpha=0.3333,beta=1.1,gamma=1.25,g1=0.05,g2=0.875)
         return normalized_img
     
     elif range_correction==Range.DARK_GAMMA:
         gamma=1.5
+        #gamma=1.7
         normalized_img=np.power(normalized_img,gamma)
         return normalized_img
     

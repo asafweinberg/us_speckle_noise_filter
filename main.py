@@ -10,10 +10,11 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import datetime
 import csv
+# from scipy.ndimage import gaussian_filter
 
 
-#images_path=".\\test_images\\images"
-images_path=".\\test_images\\images\\no_black"
+# images_path=".\\test_images\\images\\no_black\\no_black_metrics"
+images_path=".\\test_images\\images\\very_speckle"
 results_path=".\\test_images\\output"
 metrics_path=".\\metrics\\output"
 now = datetime.datetime.now()
@@ -35,10 +36,39 @@ def create_experiments_def(laplacian_filter, images_to_run):
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 1, 0.75, images_to_run),
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 1, images_to_run),
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 1, 0.5, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, 0.5, True ,images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, 1, True ,images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 1, True ,images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, 0.75, True ,images_to_run),
+        #(laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 1, True ,images_to_run),
+        #(laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 1, False ,images_to_run),
+        #(laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.5, True ,{},images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, False ,{"alpha":1,"beta":0.5}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 2, 0.75, False ,{"alpha":1,"beta":0.5}, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, True, {"alpha":1,"beta":0.5}, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 2, 0.75, True, {"alpha":1,"beta":0.5}, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, 0.75, True, {"alpha":1,"beta":0.5}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run), 
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run), 
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, True, {"alpha":0.5,"beta":1}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, False, {"alpha":0.5,"beta":1}, images_to_run),!!
+
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 1, 0.75, False, {"alpha":0.5,"beta":1}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.BILATERAL, Filters.NONE, Range.NORMALIZE, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.BILATERAL, Filters.NONE, Range.NORMALIZE, 1, 0.75, False, {"alpha":0.5,"beta":1}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NLM, Filters.NONE, Range.NORMALIZE, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NLM, Filters.NONE, Range.NORMALIZE, 1, 0.75, False, {"alpha":0.5,"beta":1}, images_to_run),
+
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.75, True, {"alpha":0,"beta":1}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.75, True, {"alpha":0.1,"beta":1}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.75, True, {"alpha":0.4,"beta":1}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.CONTRAST_STRETCH, 1, 0.75, False, {"alpha":0.1,"beta":1}, images_to_run), !!
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.CONTRAST_STRETCH, 1, 0.75, False, {"alpha":0.2,"beta":1}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, 0.75, True, {"alpha":1,"beta":0.5}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, True, {"alpha":1,"beta":0.5}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 2, 0.75, True, {"alpha":1,"beta":0.5}, images_to_run)
+        #(laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.75, True ,{"alpha":1,"beta":0.75}, images_to_run),
+        #(laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.75, True ,{"alpha":0.5,"beta":0.25}, images_to_run),
+        #(laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 1, True ,{}, images_to_run),
+
     ]
 
 def calc_metrics(laplacian_filter):
@@ -97,16 +127,17 @@ def run_many_experiments(laplacian_filter, images_to_run = None):
 def denoise_multiple_same_method(laplacian_filter,
                                  number_layers, 
                                  edge_filter, 
-                                 preprocess_filter = Filters.NONE, 
-                                 postprocess_filter = Filters.NONE,
-                                 range_correction = Range.HIST_MATCH,
-                                 diffusion_times = 1,
-                                 laplacian_scale = 1,
-                                 is_lf = True,
-                                 images_to_run = None):
+                                 preprocess_filter, 
+                                 postprocess_filter,
+                                 range_correction,
+                                 diffusion_times,
+                                 laplacian_scale,
+                                 is_lf,
+                                 other_params,
+                                 images_to_run):
     only_files = [f for f in listdir(images_path) if isfile(join(images_path, f))]
     images_names = [f for f in only_files if ".png" in f]
-    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale, is_lf)
+    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale, is_lf, other_params)
 
     if images_to_run:
         images_names = [name for name in images_names if len([id for id in images_to_run if f'({id})' in name])>0]
@@ -125,7 +156,8 @@ def denoise_multiple_same_method(laplacian_filter,
                                    range_correction,
                                    diffusion_times,
                                    laplacian_scale,
-                                   is_lf)
+                                   is_lf,
+                                   other_params)
         clean_images[img_name].append((exp_name, img))
     
     return clean_images
@@ -136,12 +168,13 @@ def denoise_single_image(img_name,
                          laplacian_filter, 
                          number_layers, 
                          edge_filter, 
-                         preprocess_filter = Filters.NONE, 
-                         postprocess_filter = Filters.NONE,
-                         range_correction = Range.HIST_MATCH,
-                         diffusion_times = 1,
-                         laplacian_scale = 1,
-                         is_lf = True):
+                         preprocess_filter, 
+                         postprocess_filter,
+                         range_correction,
+                         diffusion_times,
+                         laplacian_scale,
+                         is_lf,
+                         other_params):
     
     img = cv2.imread(join(images_path, img_name),0).astype(np.float32) / 255.0
     noisy_img = np.expand_dims(img, 2)
@@ -154,9 +187,11 @@ def denoise_single_image(img_name,
                               postprocess_filter = postprocess_filter,
                               range_correction = range_correction,
                               log=False, 
+                              file_name=None,
                               diffusion_times = diffusion_times,
-                              is_lf = is_lf)
-    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale, is_lf)
+                              is_lf = is_lf,
+                              other_params = other_params)
+    exp_name = get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale, is_lf,other_params)
 
     exp_path = f'{results_path}\\{exp_name}'
     if not os.path.exists(exp_path):
@@ -167,13 +202,13 @@ def denoise_single_image(img_name,
     save_image_results(img, clean_image,  f'{current_exp_path}\\{img_name}')
     return clean_image
 
-def get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale=1, is_lf=True): 
+def get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale=1, is_lf=True,other_params={}): 
     try:
         if(len(postprocess_filter)):
             postprocess_str='_'.join([p.name for p in postprocess_filter])
     except:
         postprocess_str=postprocess_filter.name
-    exp_name = f'scale_{laplacian_scale}_{preprocess_filter.name}_{postprocess_str}_{range_correction.name}_iter_{diffusion_times}_isLF_{is_lf}'
+    exp_name = f'scale_{laplacian_scale}_{preprocess_filter.name}_{postprocess_str}_{range_correction.name}_iter_{diffusion_times}_isLF_{is_lf}_alpha_{other_params["alpha"]}_beta_{other_params["beta"]}'
     return exp_name
 
 
@@ -189,7 +224,7 @@ def save_grid_images(image_name, images):
             # if i ==2:
             #     ax.set_title('Our Method', fontsize=14)
             # if i==0:
-            ax.set_title(images[i][0], fontsize=8)
+            ax.set_title(images[i][0], fontsize=6)
             ax.set_xticks([])
             ax.set_yticks([])
             ax.label_outer()
@@ -219,8 +254,11 @@ if __name__ == "__main__":
     postprocess_filter = Filters.NLM
 
 
-    #run_many_experiments(laplacian)
-    run_many_experiments(laplacian,[135])
+    # run_many_experiments(laplacian)
+    # run_many_experiments(laplacian,[409])
+    # run_many_experiments(laplacian,[15341,16722,16593,555,5201,5031,1414,20009])
+    run_many_experiments(laplacian,[1414])
+    # run_many_experiments(laplacian,[20788,1616])
     
     #for pic in [17,54,26,93,44,35,46]:
     # for pic in [17,54,93]:

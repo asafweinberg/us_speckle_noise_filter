@@ -18,10 +18,10 @@ from scipy.special import kl_div
 
 laplacian = np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
 mean = 0
-noise_variance = 0.04
+noise_variance = 0.1
 general_images_path="./metrics/images/general_images"
 #us_images_path="./metrics/images/US_images"
-us_images_path=".\\test_images\\images\\no_black\\no_black_metrics"
+us_images_path=".\\test_images\\images\\very_spackle"
 results_path="./metrics/output"
 
 now = datetime.datetime.now()
@@ -29,11 +29,13 @@ time = now.strftime("%m_%d_%H_%M_%S")
 
 
 
-preprocesses = [Filters.NONE,Filters.KUAN]
-postprocesses = [Filters.NONE]*2
-range_cors = [Range.NORMALIZE]*2
-diff_iterations = [2]*2
-laplacian_scales = [0.75,0.75]
+preprocesses = [Filters.NONE]*4
+postprocesses = [Filters.NONE]*4
+range_cors = [Range.NORMALIZE,Range.NORMALIZE,Range.DARK_GAMMA,Range.DARK_GAMMA]
+diff_iterations = [1,2,1,2]
+laplacian_scales = [0.75]*4
+#other_params = [{"alpha":1,"beta":0.5},{"alpha":1,"beta":0.25},{"alpha":1,"beta":0.75},{"alpha":0.5,"beta":0.25}]
+other_params = [{"alpha":1,"beta":0.5}]*4
 
 
 def run_other_methods(run_on_us=False):
@@ -104,6 +106,7 @@ def run_by_method(method, run_on_us_images, ours_index=None, laplacian_scale=1):
                                     postprocess_filter=postprocesses[ours_index], 
                                     range_correction=range_cors[ours_index],
                                     diffusion_times= diff_iterations[ours_index],
+                                    other_params = other_params[ours_index],
                                     log=False)
             exp_name = f'{preprocesses[ours_index].name}_{postprocesses[ours_index].name}_{range_cors[ours_index].name}_{diff_iterations[ours_index]}'
             image = image.squeeze()
@@ -157,6 +160,7 @@ def compare_visually():
                                     postprocess_filter=postprocesses[i], 
                                     range_correction=range_cors[i],
                                     diffusion_times= diff_iterations[i],
+                                    other_params = other_params[i],
                                     log=False)
             current_results = reslts + [('Ours', filtered)]
             save_multi_method(img_name, current_results, preprocesses[i], postprocesses[i], range_cors[i],diff_iterations[i], laplacian_scales[i])
@@ -383,5 +387,5 @@ if __name__ == "__main__":
     # laplacian = np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
     # number_layers=4
     # run_metrics(laplacian,number_layers) 
-    #run_other_methods(True)
-    compare_visually()
+    run_other_methods(False)
+    #compare_visually()

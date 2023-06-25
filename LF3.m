@@ -126,7 +126,7 @@ for j=1:SS
           %IM2scel =-LFimmN2-LFimmN1+immPor1+immPor2;
           %figure;imshow(IM2scel,[]);
         figure(1)  
-        subplot(1,2,1);imshow(LFimmP1-LFimmN1,[]);subplot(1,2,2);imshow(imgP-imgN,[])
+        %subplot(1,2,1);imshow(LFimmP1-LFimmN1,[]);subplot(1,2,2);imshow(imgP-imgN,[])
         F(i*j) = getframe(gcf) ;
         drawnow
           
@@ -259,12 +259,12 @@ if size(inImg,3)>1
     A=hsv2rgb(IMGhsv); 
 
     %figure; imshow(hsv2rgb(IMGhsv));
-    figure;subplot(1,2,1);imshow(inImg,[]);title('Before');subplot(1,2,2);imshow(A,[]);title('After')
+    %figure;subplot(1,2,1);imshow(inImg,[]);title('Before');subplot(1,2,2);imshow(A,[]);title('After')
     out=A;
 else
 %  figure;subplot(1,2,1);imagesc(I);%colormap gray
 %  subplot(1,2,2); imagesc(out);%colormap gray
-    figure;subplot(1,2,1);imshow(I,[]);title('Before');subplot(1,2,2);imshow(out,[]);title('After')
+    %figure;subplot(1,2,1);imshow(I,[]);title('Before');subplot(1,2,2);imshow(out,[]);title('After')
 
 end
 
