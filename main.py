@@ -22,12 +22,11 @@ time = now.strftime("%m_%d_%H_%M_%S")
 
 def create_metrics_def(laplacian_filter, run_on_us_images):
     return [
-        [[laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, run_on_us_images], [1]],
-        [[laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 2, run_on_us_images], [1]],
-        [[laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 2, run_on_us_images], [0.5]],
-        [[laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, run_on_us_images], [0.5]],
-        [[laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, run_on_us_images], [0.5]],
-        [[laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 1, run_on_us_images], [0.5]],
+        # [[laplacian_filter, 4, EdgeFilter.SCHARR, Filters.KUAN, Filters.NONE, Range.NORMALIZE, 1, run_on_us_images], [0.5]],
+        [[laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, run_on_us_images],[0.75]]
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, True, {"alpha":0.01,"beta":0.5}, run_on_us_images),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, True, {"alpha":10,"beta":0.5}, run_on_us_images)
+
     ]
 
 def create_experiments_def(laplacian_filter, images_to_run):
@@ -41,10 +40,10 @@ def create_experiments_def(laplacian_filter, images_to_run):
         #(laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.5, True ,{},images_to_run),
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, False ,{"alpha":1,"beta":0.5}, images_to_run),
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 2, 0.75, False ,{"alpha":1,"beta":0.5}, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, True, {"alpha":1,"beta":0.5}, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 2, 0.75, True, {"alpha":1,"beta":0.5}, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 2, 0.75, True, {"alpha":1,"beta":0.5}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, True, {"alpha":1,"beta":0.5}, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.75, True, {"alpha":1,"beta":0.5}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run),
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run), 
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run), 
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, True, {"alpha":0.5,"beta":1}, images_to_run),
@@ -72,7 +71,7 @@ def create_experiments_def(laplacian_filter, images_to_run):
     ]
 
 def calc_metrics(laplacian_filter):
-    experiments_def = create_metrics_def(laplacian_filter, False)
+    # experiments_def = create_metrics_def(laplacian_filter, False)
     average_metrics = []
     # for i in range(len(experiments_def)):
     #     exp = experiments_def[i][0]
@@ -82,14 +81,14 @@ def calc_metrics(laplacian_filter):
     #     metrics_results = run_metrics(*exp)
     #     average_metrics.append((exp_name, 'general', metrics_results))
 
-    experiments_def = create_metrics_def(laplacian_filter, True)
+    experiments_def = create_metrics_def(laplacian_filter, False)
     for i in range(len(experiments_def)):
         exp = experiments_def[i][0]
         extra = experiments_def[i][1]
-        exp_name = get_experiment_name(exp[2],exp[1],exp[3],exp[4],exp[5],exp[6], extra[0])
+        exp_name = get_experiment_name(exp[2],exp[1],exp[3],exp[4],exp[5],exp[6], extra[0],True,{"alpha":1,"beta":0.5})
         exp[0] = np.multiply(exp[0], extra[0])
         metrics_results = run_metrics(*exp)
-        average_metrics.append((exp_name, 'US', metrics_results))
+        average_metrics.append((exp_name, 'General', metrics_results))
 
     all_keys = metrics_results.keys()
     header = ['exp_name', 'dataset'] + list(sorted(all_keys))
@@ -257,7 +256,7 @@ if __name__ == "__main__":
     # run_many_experiments(laplacian)
     # run_many_experiments(laplacian,[409])
     # run_many_experiments(laplacian,[15341,16722,16593,555,5201,5031,1414,20009])
-    run_many_experiments(laplacian,[1414])
+    run_many_experiments(laplacian,[409])
     # run_many_experiments(laplacian,[20788,1616])
     
     #for pic in [17,54,26,93,44,35,46]:

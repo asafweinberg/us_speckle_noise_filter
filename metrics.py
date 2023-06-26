@@ -21,7 +21,9 @@ mean = 0
 noise_variance = 0.1
 general_images_path="./metrics/images/general_images"
 #us_images_path="./metrics/images/US_images"
-us_images_path=".\\test_images\\images\\very_spackle"
+us_images_path="test_images/images/very_speckle"
+# us_images_path="test_images/images/very_speckle/metric_test"
+# results_path="./metrics/output"
 results_path="./metrics/output"
 
 now = datetime.datetime.now()
@@ -29,13 +31,17 @@ time = now.strftime("%m_%d_%H_%M_%S")
 
 
 
-preprocesses = [Filters.NONE]*4
-postprocesses = [Filters.NONE]*4
-range_cors = [Range.NORMALIZE,Range.NORMALIZE,Range.DARK_GAMMA,Range.DARK_GAMMA]
-diff_iterations = [1,2,1,2]
-laplacian_scales = [0.75]*4
+preprocesses = [Filters.NLM]
+postprocesses = [Filters.NONE]
+# range_cors = [Range.NORMALIZE,Range.NORMALIZE,Range.DARK_GAMMA,Range.DARK_GAMMA]
+range_cors = [Range.NORMALIZE]
+# diff_iterations = [1,2,1,2]
+diff_iterations = [1]
+# laplacian_scales = [0.75]*4
+laplacian_scales = [0.75]
 #other_params = [{"alpha":1,"beta":0.5},{"alpha":1,"beta":0.25},{"alpha":1,"beta":0.75},{"alpha":0.5,"beta":0.25}]
-other_params = [{"alpha":1,"beta":0.5}]*4
+# other_params = [{"alpha":1,"beta":0.5}]*4
+other_params = [{"alpha":1,"beta":0.5}]
 
 
 def run_other_methods(run_on_us=False):
@@ -131,7 +137,7 @@ def compare_visually():
 
     for img_name in tqdm(images_names):
         image = cv2.imread(join(images_path, img_name),0).astype(np.float32) / 255.0
-        reslts = [('origin', image)]
+        reslts = [('Original', image)]
         for method in Methods:
             if method == Methods.MEDIAN:
                 filtered = apply_filter(image, cv2.medianBlur, ksize=5)
@@ -162,7 +168,8 @@ def compare_visually():
                                     diffusion_times= diff_iterations[i],
                                     other_params = other_params[i],
                                     log=False)
-            current_results = reslts + [('Ours', filtered)]
+            # current_results = reslts + [('Our Method No LF', filtered)]
+            current_results = reslts + [('Our Method', filtered)]
             save_multi_method(img_name, current_results, preprocesses[i], postprocesses[i], range_cors[i],diff_iterations[i], laplacian_scales[i])
 
 
@@ -177,6 +184,9 @@ def save_multi_method(image_name, images, pre, post, range, iter, scale):
             ax.set_xticks([])
             ax.set_yticks([])
             ax.label_outer()
+            plt.imsave(f'{results_path}\\{image_name},{images[i][0]}.png',images[i][1], cmap="gray")
+
+        
     
     plt.tight_layout()
     dir = f'{results_path}\\experiments_{exp_name}_{time}'
@@ -209,6 +219,7 @@ def run_metrics(laplacian_filter,
 
     for img_name in tqdm(images_names):
         img = cv2.imread(join(images_path, img_name),0).astype(np.float32) / 255.0
+        print(img_name)
         results = run_metrics_on_img(img,
                                      laplacian_filter,
                                      number_layers, 
@@ -288,14 +299,14 @@ def add_speckle_noise(img):
 
 def compute_all_metrics(origin_img,result_img):
     return {
-        'mse': meansquareerror(origin_img,result_img),
-        'signal2noise': signaltonoise(result_img,origin_img),
-        'psnr': psnr(origin_img,result_img),
+        # 'mse': meansquareerror(origin_img,result_img),
+        # 'signal2noise': signaltonoise(result_img,origin_img),
+        # 'psnr': psnr(origin_img,result_img),
         'ssim': ssim(origin_img,result_img,data_range=result_img.max() - result_img.min()),
-        'sdr': calculate_sdr(result_img, origin_img),
-        'cv': calculate_cv(result_img),
-        'cnr': calculate_contrast_to_noise_ratio(result_img, origin_img),
-        'iqi': calculate_iqi(origin_img, result_img)
+        # 'sdr': calculate_sdr(result_img, origin_img),
+        'cv': calculate_cv(result_img)
+        # 'cnr': calculate_contrast_to_noise_ratio(result_img, origin_img),
+        # 'iqi': calculate_iqi(origin_img, result_img)
     }
 
 
@@ -342,18 +353,19 @@ def calculate_contrast_to_noise_ratio(image, origin):
 
 def init_avg_results():
     return {
-        'mse': 0,
-        'signal2noise': 0,
-        'psnr': 0,
+        # 'mse': 0,
+        # 'signal2noise': 0,
+        # 'psnr': 0,
         'ssim':0,
-        'sdr':0,
+        # 'sdr':0,
         'cv': 0,
-        'cnr': 0,
-        'iqi':0
+        # 'cnr': 0,
+        # 'iqi':0
         }
 
 def print_results(metrics, avg=False, log_results=True):
-    results_str = f'MSE: {metrics["mse"]},    signal2noise: {metrics["signal2noise"]},    PSNR: {metrics["psnr"]},     SSIM: {metrics["ssim"]},   SDR: {metrics["sdr"]}'
+    # results_str = f'MSE: {metrics["mse"]},    signal2noise: {metrics["signal2noise"]},    PSNR: {metrics["psnr"]},     SSIM: {metrics["ssim"]},   SDR: {metrics["sdr"]}'
+    results_str = f'SSIM: {metrics["ssim"]},   CV: {metrics["cv"]}'
     if log_results:
         if avg: print('Average:')
         print(results_str)
@@ -388,4 +400,4 @@ if __name__ == "__main__":
     # number_layers=4
     # run_metrics(laplacian,number_layers) 
     run_other_methods(False)
-    #compare_visually()
+    # compare_visually()

@@ -20,14 +20,14 @@ eng = matlab.engine.start_matlab()
 #trig_beta = 0.5
 
 #input image in grey scale and type float_32
-def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,preprocess_filter, postprocess_filter, range_correction, log=False, file_name=None,   diffusion_times=1, is_lf = True, other_params={"alpha":1, "beta":0.5}):
+def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,preprocess_filter, postprocess_filter, range_correction, log=False, file_name=None,   diffusion_times=1, is_lf = False, other_params={"alpha":1, "beta":0.5}):
     if len(other_params)!=0:
         trig_alpha = other_params["alpha"]
         trig_beta = other_params["beta"]
     else:
         trig_alpha = 1
         trig_beta = 0.5   
-             
+
     image_sharp=image
 
     if max(image.shape)>1024: 
@@ -66,7 +66,8 @@ def denoise_img(image, laplacian_filter, pyr_levels, pyr_method, edge_filter,pre
         
         BlurredPyramid_LF, padR, padC = create_pyramid(image, pyr_levels, pyr_method)
         BlurredPyramid_original, r, c = create_pyramid(np.expand_dims(original_image, 2), pyr_levels, pyr_method)
-        BlurredPyramid, r, c = create_pyramid(image_sharp, pyr_levels, pyr_method)
+        # BlurredPyramid, r, c = create_pyramid(image_sharp, pyr_levels, pyr_method)
+        BlurredPyramid, r, c = create_pyramid(image, pyr_levels, pyr_method)
 
         W= np.abs(ndimage.convolve(np.abs(BlurredPyramid[pyr_levels-1]), laplacian_filter, mode='nearest'))
 
@@ -267,7 +268,8 @@ def correct_range(image, original_image, range_correction):
     
     elif range_correction==Range.DARK_GAMMA:
         gamma=1.5
-        #gamma=1.7
+        # gamma=1.8
+        # gamma=1.2
         normalized_img=np.power(normalized_img,gamma)
         return normalized_img
     
