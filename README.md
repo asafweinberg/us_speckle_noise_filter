@@ -1,4 +1,4 @@
-# us_speckle_noise_filter
+# US Speckle Noise Filter - Final Project
 
 •	denoise.py: The main denoising process.
 
