@@ -153,10 +153,10 @@ if size(inImg,3)>1
     A=hsv2rgb(IMGhsv); 
     out=A;
     %figure; imshow(hsv2rgb(IMGhsv));
-    figure;subplot(1,2,1);imshow(inImg,[]);title('Before');subplot(1,2,2);imshow(A,[]);title('After')
+    %figure;subplot(1,2,1);imshow(inImg,[]);title('Before');subplot(1,2,2);imshow(A,[]);title('After') !!!
 else
 %  figure;subplot(1,2,1);imagesc(I);%colormap gray
 %  subplot(1,2,2); imagesc(out);%colormap gray
-    figure;subplot(1,2,1);imshow(I,[]);title('Before');subplot(1,2,2);imshow(out,[]);title('After')
+    %figure;subplot(1,2,1);imshow(I,[]);title('Before');subplot(1,2,2);imshow(out,[]);title('After') !!!
 
 end

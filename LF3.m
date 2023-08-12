@@ -126,7 +126,7 @@ for j=1:SS
           %IM2scel =-LFimmN2-LFimmN1+immPor1+immPor2;
           %figure;imshow(IM2scel,[]);
         figure(1)  
-        %subplot(1,2,1);imshow(LFimmP1-LFimmN1,[]);subplot(1,2,2);imshow(imgP-imgN,[])
+        subplot(1,2,1);imshow(LFimmP1-LFimmN1,[]);subplot(1,2,2);imshow(imgP-imgN,[])
         F(i*j) = getframe(gcf) ;
         drawnow
           

@@ -41,9 +41,9 @@ def create_experiments_def(laplacian_filter, images_to_run):
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, False ,{"alpha":1,"beta":0.5}, images_to_run),
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 2, 0.75, False ,{"alpha":1,"beta":0.5}, images_to_run),
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, True, {"alpha":1,"beta":0.5}, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.75, True, {"alpha":1,"beta":0.5}, images_to_run),
+        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run),
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run),
-        (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run),
+        # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run),
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run), 
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.NORMALIZE, 1, 0.75, False, {"alpha":1,"beta":0.5}, images_to_run), 
         # (laplacian_filter, 4, EdgeFilter.SCHARR, Filters.NONE, Filters.NONE, Range.DARK_GAMMA, 1, 0.75, True, {"alpha":0.5,"beta":1}, images_to_run),
@@ -198,7 +198,7 @@ def denoise_single_image(img_name,
     current_exp_path = f'{exp_path}\\{time}'
     if not os.path.exists(current_exp_path):
         os.makedirs(current_exp_path)    
-    save_image_results(img, clean_image,  f'{current_exp_path}\\{img_name}')
+    save_image_results(img, clean_image,  f'{current_exp_path}\\{img_name}') 
     return clean_image
 
 def get_experiment_name(edge_filter, number_layers, preprocess_filter, postprocess_filter, range_correction, diffusion_times, laplacian_scale=1, is_lf=True,other_params={}): 
@@ -214,6 +214,7 @@ def get_experiment_name(edge_filter, number_layers, preprocess_filter, postproce
 def save_grid_images(image_name, images):
     img = cv2.imread(join(images_path, image_name),0).astype(np.float32) / 255.0
     images = [('Original', img)] + images
+    ###############################################
     fig, axs = plt.subplots(3, 3, figsize=(10,10))
     for i, ax in enumerate(axs.flat):
         if i < len(images):
@@ -229,7 +230,26 @@ def save_grid_images(image_name, images):
             ax.label_outer()
         else:
             ax.axis('off')
-    
+    #################################
+    # fig, ax = plt.subplots(1, 2)
+
+    # # Display the first grayscale image on the left subplot
+    # ax[0].imshow(img, cmap='gray')
+    # ax[0].set_title('Original')
+    # ax[0].axis('off')
+
+    # # Display the second grayscale image on the right subplot
+    # ax[1].imshow(images[1][1], cmap='gray')
+    # ax[1].set_title('Denoised')
+    # ax[1].axis('off')
+
+    # # Adjust the spacing between the subplots
+    # plt.subplots_adjust(wspace=0.1)
+
+    # # Show the figure with the two grayscale images side by side
+    # plt.show()
+    ###########################################
+
     plt.tight_layout()
     plt.savefig(f'{results_path}\\experiments_{time}_{image_name}')
     plt.close()
@@ -249,14 +269,25 @@ if __name__ == "__main__":
     laplacian = np.array([0, -1, 0, -1, 4, -1, 0, -1, 0]).reshape((3, 3))
     number_layers=4
     edge_filter = EdgeFilter.SOBEL_CV2
-    preprocess_filter = Filters.NLM
-    postprocess_filter = Filters.NLM
+    
 
 
-    # run_many_experiments(laplacian)
-    # run_many_experiments(laplacian,[409])
-    # run_many_experiments(laplacian,[15341,16722,16593,555,5201,5031,1414,20009])
-    run_many_experiments(laplacian,[409])
+    ### KENES
+    ## Patient treated for a perforated appendicitis with huge amounts of pus and air in the peritoneal cavity
+    run_many_experiments(laplacian,[37956]) 
+
+    ## fat liver
+    # run_many_experiments(laplacian,[555])
+
+    ## spleen
+    # run_many_experiments(laplacian,[16722])
+
+
+
+
+
+
+
     # run_many_experiments(laplacian,[20788,1616])
     
     #for pic in [17,54,26,93,44,35,46]:
