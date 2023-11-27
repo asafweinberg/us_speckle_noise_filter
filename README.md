@@ -1,4 +1,4 @@
-# US Speckle Noise Filter - Final Project
+# Ultrasound Speckle Noise Filter - Final Project
 
 •	denoise.py: The main denoising process.
 
